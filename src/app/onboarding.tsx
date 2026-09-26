@@ -3,6 +3,7 @@ import { BadgeCheck } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { LogoMark } from '@/components/brand';
 import { UniversityNameInput, UniversityPicker } from '@/components/university-picker';
 import { Button, Chip, ChipRow, Header, Input, Screen, Text } from '@/components/ui';
@@ -12,7 +13,7 @@ import { useSession } from '@/lib/session';
 import { upcomingTerms } from '@/lib/terms';
 import { colors, spacing } from '@/theme/tokens';
 
-export default function OnboardingScreen() {
+function OnboardingScreen() {
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const editing = edit === '1';
   const { signedIn, profile, updateProfile, signOut } = useSession();
@@ -170,6 +171,8 @@ export default function OnboardingScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(OnboardingScreen, 'profile');
 
 const styles = StyleSheet.create({
   top: {

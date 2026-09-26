@@ -228,6 +228,57 @@ assert.equal((await as(D, 'select member_count from public.group_directory where
 console.log('✓ each club gets one chat, created on first use');
 
 // ---------------------------------------------------------------------------
+// Guests (signed out): the catalogue and general university information only
+
+await db.query(
+  `insert into public.clubs (university_id, name, category, source, source_url, verified)
+   values ('heidelberg', 'Heidelberg Rowing Club', 'sports', 'ai', 'https://www.uni-heidelberg.de/sport', true)`,
+);
+assert.ok((await count(null, 'select count(*)::int as n from public.universities')) > 10000);
+assert.ok((await count(null, 'select count(*)::int as n from public.countries')) > 100);
+assert.equal(await count(null, `select count(*)::int as n from public.university_scores where university_id = 'heidelberg'`), 1);
+await as(null, 'select * from public.university_insights');
+// Student-suggested clubs (and their chats) need an account; official-page clubs are general information.
+assert.deepEqual(
+  (await as(null, `select name, group_id from public.club_list where university_id = 'heidelberg'`)).rows,
+  [{ name: 'Heidelberg Rowing Club', group_id: null }],
+);
+for (const relation of [
+  'profiles',
+  'posts',
+  'comments',
+  'post_likes',
+  'equivalences',
+  'university_ratings',
+  'saved_universities',
+  'user_signals',
+  'research_requests',
+  'groups',
+  'group_members',
+  'group_messages',
+  'post_feed',
+  'equivalence_feed',
+  'university_stats',
+  'group_directory',
+]) {
+  assert.equal(await count(null, `select count(*)::int as n from public.${relation}`), 0, `guests must not read ${relation}`);
+}
+await assert.rejects(as(null, `insert into public.posts (author_id, topic, body) values ($1, 'question', 'A guest question')`, [A]));
+await assert.rejects(as(null, `insert into public.comments (post_id, author_id, body) values ($1, $2, 'Guest comment')`, [postId, A]));
+await assert.rejects(as(null, `insert into public.saved_universities (user_id, university_id) values ($1, 'ucl')`, [A]));
+await assert.rejects(
+  as(null, `insert into public.equivalences (submitted_by, home_university, home_course, home_ects, destination_id, destination_course, destination_ects, approved, academic_year)
+            values ($1, 'University of Milan', 'Genetics', 6, 'heidelberg', 'Genetics', 6, true, '2025/26')`, [A]),
+);
+await assert.rejects(
+  as(null, `insert into public.university_ratings (university_id, user_id, teaching, professors, environment, sustainability, relation, academic_year)
+            values ('ucl', $1, 5, 5, 5, 5, 'exchange', '2025/26')`, [A]),
+);
+await assert.rejects(as(null, `insert into public.clubs (university_id, name) values ('ucl', 'Guest club')`));
+await assert.rejects(as(null, `select public.create_group('Guest group', '', 'group', 'public', null)`));
+console.log('✓ guests read the catalogue, insights, scores and official-page clubs; student content and every write need an account');
+
+// ---------------------------------------------------------------------------
 // Account deletion cascades everything
 
 await db.exec(`delete from auth.users where id = '${A}'`);

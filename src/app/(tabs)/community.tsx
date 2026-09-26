@@ -3,6 +3,7 @@ import { MessagesSquare, Plus, Search } from 'lucide-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { SignInScreen } from '@/components/account-gate';
 import { PostCard } from '@/components/post-card';
 import { Segmented } from '@/components/segmented';
 import { Button, Chip, ChipScroller, DemoBadge, EmptyState, IconButton, Input, Screen, Text } from '@/components/ui';
@@ -17,7 +18,7 @@ import { colors, spacing } from '@/theme/tokens';
 type Feed = 'forYou' | 'latest';
 type Filter = 'all' | Topic;
 
-export default function CommunityScreen() {
+function CommunityScreenContent() {
   const params = useLocalSearchParams<{ feed?: string }>();
   const { profile } = useSession();
   const [feed, setFeed] = useState<Feed>(params.feed === 'latest' ? 'latest' : 'forYou');
@@ -105,6 +106,12 @@ export default function CommunityScreen() {
       </View>
     </Screen>
   );
+}
+
+export default function CommunityScreen() {
+  const { signedIn } = useSession();
+  if (!signedIn) return <SignInScreen feature="community" title={t('community.title')} />;
+  return <CommunityScreenContent />;
 }
 
 const styles = StyleSheet.create({

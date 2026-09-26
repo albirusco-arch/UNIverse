@@ -125,9 +125,12 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [userId]);
 
+  const signedIn = isDemoMode ? demoEmail !== null : session !== null;
   useEffect(() => {
-    if (isDemoMode) setDemoIdentity(profile);
-  }, [profile]);
+    if (!isDemoMode) return;
+    setDemoIdentity(profile, signedIn);
+    notifyChange();
+  }, [profile, signedIn]);
 
   const updateProfile = useCallback(
     async (changes: Partial<Profile>) => {
@@ -210,7 +213,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     notifyChange();
   }, []);
 
-  const signedIn = isDemoMode ? demoEmail !== null : session !== null;
   const value = useMemo<SessionState>(
     () => ({
       ready,

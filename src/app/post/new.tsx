@@ -3,6 +3,7 @@ import { Send } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { useFeedback } from '@/components/feedback';
 import { UniversityPicker } from '@/components/university-picker';
 import { Button, Chip, ChipRow, Header, Input, Screen, Text } from '@/components/ui';
@@ -18,7 +19,7 @@ function isTopic(value: string | undefined): value is Topic {
   return TOPICS.includes(value as Topic);
 }
 
-export default function NewPostScreen() {
+function NewPostScreen() {
   const params = useLocalSearchParams<{ universityId?: string; topic?: string }>();
   const { profile } = useSession();
   const { toast } = useFeedback();
@@ -89,6 +90,8 @@ export default function NewPostScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(NewPostScreen, 'community');
 
 const styles = StyleSheet.create({
   form: {

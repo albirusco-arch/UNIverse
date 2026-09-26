@@ -503,6 +503,57 @@ const en = {
     reportGroup: 'Report group',
     deleteMessage: 'Delete message',
   },
+  guest: {
+    badge: 'Guest',
+    notNow: 'Not now',
+    homeTitle: 'Plan your time abroad',
+    homeBody: 'Sign up free with your university email to match your courses, save universities and meet students on your path.',
+    browse: 'Browse universities',
+    account: 'Log in or sign up',
+    research: {
+      title: 'Log in to run AI research',
+      body: 'Course matches, entry requirements, scholarships and visa checks are built around your studies. Sign up free with your university email.',
+    },
+    community: {
+      title: 'Join the student community',
+      body: 'Posts and comments are for verified students. Log in or sign up with your university email to read and post.',
+    },
+    groups: {
+      title: 'Chat with students on your path',
+      body: 'Groups, channels and club chats are for verified students. Log in or sign up with your university email to join.',
+    },
+    save: {
+      title: 'Log in to save universities',
+      body: 'Saved universities build your plan and personalise your feed.',
+    },
+    equivalences: {
+      title: 'Log in to see equivalences',
+      body: 'Course equivalences come from students’ learning agreements, so only verified students can see and share them.',
+    },
+    rate: {
+      title: 'Log in to rate universities',
+      body: 'Only verified students can rate a university.',
+    },
+    clubs: {
+      title: 'Log in to join club chats',
+      body: 'Club chats and new club suggestions are for verified students.',
+    },
+    profile: {
+      title: 'Your profile',
+      body: 'Sign up with your university email to build your exchange plan, save universities and join groups.',
+    },
+  },
+  premium: {
+    badge: 'Premium',
+    comingSoon: 'Coming soon',
+    cvTitle: 'CV analysis',
+    cvBody: 'Feedback on your CV for exchange, internship and master’s applications.',
+    cvScreenBody: 'Upload your CV and get structured feedback: what to strengthen, what recruiters and admissions offices look for, and how to present your time abroad.',
+    cvPoint1: 'Clear, section-by-section feedback',
+    cvPoint2: 'Tailored to the programme or role you apply for',
+    cvPoint3: 'Tips to present your international experience',
+    locked: 'CV analysis is a Premium feature and is not available yet.',
+  },
   profile: {
     title: 'Profile',
     verified: 'Verified student',

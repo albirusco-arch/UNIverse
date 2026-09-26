@@ -505,6 +505,57 @@ const it: Dictionary = {
     reportGroup: 'Segnala gruppo',
     deleteMessage: 'Elimina messaggio',
   },
+  guest: {
+    badge: 'Ospite',
+    notNow: 'Non ora',
+    homeTitle: 'Pianifica il tuo periodo all’estero',
+    homeBody: 'Registrati gratis con l’email universitaria per abbinare i tuoi esami, salvare università e conoscere studenti sul tuo percorso.',
+    browse: 'Sfoglia le università',
+    account: 'Accedi o registrati',
+    research: {
+      title: 'Accedi per usare la ricerca AI',
+      body: 'Abbinamento esami, requisiti d’ingresso, borse di studio e visti sono costruiti sui tuoi studi. Registrati gratis con l’email universitaria.',
+    },
+    community: {
+      title: 'Entra nella community degli studenti',
+      body: 'Post e commenti sono riservati agli studenti verificati. Accedi o registrati con l’email universitaria per leggere e scrivere.',
+    },
+    groups: {
+      title: 'Chatta con gli studenti sul tuo percorso',
+      body: 'Gruppi, canali e chat dei club sono riservati agli studenti verificati. Accedi o registrati con l’email universitaria per entrare.',
+    },
+    save: {
+      title: 'Accedi per salvare le università',
+      body: 'Le università salvate costruiscono il tuo piano e personalizzano il feed.',
+    },
+    equivalences: {
+      title: 'Accedi per vedere le equivalenze',
+      body: 'Le equivalenze vengono dai learning agreement degli studenti: solo gli studenti verificati possono vederle e condividerle.',
+    },
+    rate: {
+      title: 'Accedi per valutare le università',
+      body: 'Solo gli studenti verificati possono valutare un’università.',
+    },
+    clubs: {
+      title: 'Accedi per entrare nelle chat dei club',
+      body: 'Le chat dei club e i nuovi suggerimenti sono riservati agli studenti verificati.',
+    },
+    profile: {
+      title: 'Il tuo profilo',
+      body: 'Registrati con l’email universitaria per costruire il tuo piano, salvare università ed entrare nei gruppi.',
+    },
+  },
+  premium: {
+    badge: 'Premium',
+    comingSoon: 'In arrivo',
+    cvTitle: 'Analisi del CV',
+    cvBody: 'Feedback sul tuo CV per candidature a scambi, tirocini e lauree magistrali.',
+    cvScreenBody: 'Carica il tuo CV e ricevi un feedback strutturato: cosa rafforzare, cosa cercano recruiter e uffici ammissioni e come valorizzare il periodo all’estero.',
+    cvPoint1: 'Feedback chiaro, sezione per sezione',
+    cvPoint2: 'Su misura per il corso o il ruolo a cui ti candidi',
+    cvPoint3: 'Consigli per valorizzare l’esperienza internazionale',
+    locked: 'L’analisi del CV è una funzione Premium e non è ancora disponibile.',
+  },
   profile: {
     title: 'Profilo',
     verified: 'Studente verificato',

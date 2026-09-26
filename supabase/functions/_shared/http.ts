@@ -29,7 +29,7 @@ export function adminClient(): SupabaseClient {
 /** Resolves the caller from the request's JWT, or null when it is missing or invalid. */
 export async function getCaller(req: Request): Promise<User | null> {
   const authorization = req.headers.get('Authorization');
-  if (!authorization) return null;
+  if (!authorization?.startsWith('Bearer ')) return null;
   const client = createClient(env('SUPABASE_URL'), env('SUPABASE_ANON_KEY'), {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false, autoRefreshToken: false },

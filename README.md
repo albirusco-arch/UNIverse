@@ -20,6 +20,8 @@ Built with Expo (React Native + TypeScript), Supabase (database, sign-in, realti
 | --- | --- |
 | **Brand** | “U” logo with its orbit (`assets/brand/`), blue → violet palette on a near-black background (`src/theme/tokens.ts`), generated icons and splash. |
 | **Language** | English by default, Italian as a second language (`src/i18n/en.ts`, `it.ts`). The app follows the device language and can be switched in *Settings → Language*. AI research reports are written in the app language. |
+| **Guests and accounts** | *Explore as guest* opens the catalogue and each university's overview, quality scores and the clubs found on official pages. AI research, posts and comments, equivalences, saving universities, ratings and groups need an account: guests get a friendly log-in / sign-up prompt. The database enforces the same rules (RLS policies for signed-out visitors) and the AI functions answer 401 without a signed-in user. |
+| **Premium (coming soon)** | *CV analysis* is visible on the AI tab but locked. There is no payment provider and no analysis yet: `src/lib/premium.ts` holds the feature flag (`EXPO_PUBLIC_FEATURE_CV_ANALYSIS`) and an entitlement-check stub to connect later. |
 | **University email sign-in** | 6-digit code by email. The app recognises the university from the domain (including subdomains such as `studenti.unimi.it`) and pre-fills it in the profile. The database also rejects non-university addresses (trigger on `auth.users`), so Gmail, Outlook and similar cannot register. Missing domains go in `email_allowlist`. |
 | **AI research** (*AI* tab) | Four kinds: *Course match* (exam by exam against the destination's catalogue), *Entry requirements*, *Scholarships*, *Visa* (US, Asia, UK… and EU free movement). Each report shows numbered sources, the date checked, the academic year, steps, deadlines and warnings. |
 | **University quality** | *Quality* tab of each university. ESG (environmental, social, governance) and teaching are researched by Claude from sustainability reports, rankings and official surveys: an indicator counts only if its source was actually opened, and without enough evidence the score stays empty. Students rate 4 aspects (teaching, professors, environment, sustainability); only averages are shown. Score = ESG 35% + teaching 25% + students 40%; below 3 ratings it is “provisional”. “Top rated” = score ≥ 75 and not provisional. |
@@ -62,7 +64,7 @@ npm install
 npx expo start
 ```
 
-Scan the QR code with **Expo Go**. In demo mode any university email and any 6-digit code work (try `name@studenti.unimi.it`).
+Scan the QR code with **Expo Go**. In demo mode, *Try the demo* signs you in as a sample student; any university email and any 6-digit code also work (try `name@studenti.unimi.it`), and *Explore as guest* shows the signed-out experience.
 
 ## Connect the backend
 

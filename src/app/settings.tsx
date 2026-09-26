@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { FileText, Languages, LifeBuoy, Mail, Route, Scale, ShieldCheck, Trash2, Users } from 'lucide-react-native';
+import { FileText, Languages, LifeBuoy, LogIn, Mail, Route, Scale, ShieldCheck, Trash2, Users } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 
@@ -68,11 +68,19 @@ export default function SettingsScreen() {
 
   return (
     <Screen header={<Header title={t('settings.title')} />}>
-      {signedIn && (
+      {signedIn ? (
         <Group title={t('settings.account')}>
           <ListRow icon={Mail} label={t('settings.email')} value={email ?? ''} />
           <Divider />
           <ListRow icon={Route} label={t('settings.plan')} onPress={() => router.push('/onboarding?edit=1')} />
+        </Group>
+      ) : (
+        <Group title={t('settings.account')}>
+          <ListRow
+            icon={LogIn}
+            label={t('guest.account')}
+            onPress={() => router.push({ pathname: '/auth', params: { mode: 'signup' } })}
+          />
         </Group>
       )}
 

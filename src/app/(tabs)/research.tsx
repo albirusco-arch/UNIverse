@@ -14,7 +14,9 @@ import {
 import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { SignInCard } from '@/components/account-gate';
 import { CountryPicker } from '@/components/country-picker';
+import { CvAnalysisCard } from '@/components/premium-card';
 import { UniversityNameInput, UniversityPicker } from '@/components/university-picker';
 import { Badge, Button, Card, Chip, ChipRow, DemoBadge, EmptyState, IconTile, Input, Screen, SectionHeader, Text } from '@/components/ui';
 import { countryName, getUniversity, listMyResearch, RateLimitError, requestResearch, trackSignal } from '@/data/api';
@@ -88,7 +90,7 @@ function Label({ children }: { children: string }) {
   );
 }
 
-export default function ResearchTab() {
+function ResearchForm() {
   const params = useLocalSearchParams<{ kind?: string; destinationId?: string }>();
   const { profile } = useSession();
   const home = getUniversity(profile.homeUniversityId);
@@ -426,6 +428,10 @@ export default function ResearchTab() {
         </View>
       </Card>
 
+      <View style={styles.premium}>
+        <CvAnalysisCard />
+      </View>
+
       <View style={styles.history}>
         <SectionHeader title={t('research.history')} />
         {history && history.length > 0 ? (
@@ -442,7 +448,36 @@ export default function ResearchTab() {
   );
 }
 
+/** Guests see what the AI does and are invited to sign up; the Premium card stays visible. */
+function GuestResearch() {
+  return (
+    <Screen tab>
+      <View style={styles.titleRow}>
+        <Text variant="title1" accessibilityRole="header">
+          {t('research.title')}
+        </Text>
+        <DemoBadge />
+      </View>
+      <Text variant="callout" color="textSecondary" style={styles.subtitle}>
+        {t('research.subtitle')}
+      </Text>
+      <SignInCard feature="research" />
+      <View style={styles.premium}>
+        <CvAnalysisCard />
+      </View>
+    </Screen>
+  );
+}
+
+export default function ResearchTab() {
+  const { signedIn } = useSession();
+  return signedIn ? <ResearchForm /> : <GuestResearch />;
+}
+
 const styles = StyleSheet.create({
+  premium: {
+    marginTop: spacing.xl,
+  },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',

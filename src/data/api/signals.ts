@@ -5,7 +5,7 @@
  */
 import type { Signal, SignalKind } from '../types';
 
-import { currentUserId, isDemoMode, requireClient } from './core';
+import { currentUserId, isDemoGuest, isDemoMode, requireClient } from './core';
 import { demo } from './demo-store';
 
 const MAX_SIGNALS = 200;
@@ -13,7 +13,7 @@ const MAX_SIGNALS = 200;
 /** Fire-and-forget: personalisation must never block or break the UI. */
 export function trackSignal(kind: SignalKind, value: string) {
   const trimmed = value.trim().slice(0, 200);
-  if (!trimmed) return;
+  if (!trimmed || isDemoGuest()) return;
   if (isDemoMode) {
     demo.signals.unshift({ kind, value: trimmed, createdAt: new Date().toISOString() });
     demo.signals.length = Math.min(demo.signals.length, MAX_SIGNALS);
@@ -27,6 +27,7 @@ export function trackSignal(kind: SignalKind, value: string) {
 }
 
 export async function listSignals(): Promise<Signal[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) return [...demo.signals];
   if (!(await currentUserId())) return [];
   const { data, error } = await requireClient()

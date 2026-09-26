@@ -4,6 +4,7 @@ import { AtSign, ExternalLink, Flag, Link2, MessageCircle, SearchX } from 'lucid
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { useRequireAccount } from '@/components/account-gate';
 import { clubIcons, ClubSourceBadge } from '@/components/club-card';
 import { useFeedback } from '@/components/feedback';
 import { Badge, Button, Card, EmptyState, Header, IconTile, ListRow, Screen, Text } from '@/components/ui';
@@ -26,6 +27,7 @@ export default function ClubScreen() {
   const { data: club, loading } = useQuery(() => getClub(id), [id]);
   const { showSheet, toast } = useFeedback();
   const [opening, setOpening] = useState(false);
+  const requireAccount = useRequireAccount();
 
   if (!club) {
     return (
@@ -41,31 +43,34 @@ export default function ClubScreen() {
 
   const university = getUniversity(club.universityId);
 
-  const openChat = async () => {
-    setOpening(true);
-    try {
-      const groupId = await openClubGroup(club.id, club.name);
-      router.push({ pathname: '/group/[id]', params: { id: groupId } });
-    } catch {
-      toast(t('common.error'));
-    } finally {
-      setOpening(false);
-    }
-  };
+  const openChat = () =>
+    requireAccount('clubs', async () => {
+      setOpening(true);
+      try {
+        const groupId = await openClubGroup(club.id, club.name);
+        router.push({ pathname: '/group/[id]', params: { id: groupId } });
+      } catch {
+        toast(t('common.error'));
+      } finally {
+        setOpening(false);
+      }
+    });
 
   const report = () =>
-    showSheet({
-      title: t('community.reportTitle'),
-      message: t('community.reportBody'),
-      options: REASONS.map((reason) => ({
-        label: t(`community.reportReasons.${reason}`),
-        onPress: () => {
-          reportContent('club', club.id, reason)
-            .then(() => toast(t('community.reported')))
-            .catch(() => toast(t('common.error')));
-        },
-      })),
-    });
+    requireAccount('clubs', () =>
+      showSheet({
+        title: t('community.reportTitle'),
+        message: t('community.reportBody'),
+        options: REASONS.map((reason) => ({
+          label: t(`community.reportReasons.${reason}`),
+          onPress: () => {
+            reportContent('club', club.id, reason)
+              .then(() => toast(t('community.reported')))
+              .catch(() => toast(t('common.error')));
+          },
+        })),
+      }),
+    );
 
   return (
     <Screen

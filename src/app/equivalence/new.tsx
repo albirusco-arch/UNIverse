@@ -3,6 +3,7 @@ import { ArrowLeftRight, CircleCheck, CircleX } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { useFeedback } from '@/components/feedback';
 import { UniversityNameInput, UniversityPicker } from '@/components/university-picker';
 import { Button, Chip, ChipRow, Header, Input, Screen, Text } from '@/components/ui';
@@ -16,7 +17,7 @@ function parseEcts(value: string): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
-export default function NewEquivalenceScreen() {
+function NewEquivalenceScreen() {
   const params = useLocalSearchParams<{ destinationId?: string }>();
   const { profile } = useSession();
   const { toast } = useFeedback();
@@ -131,6 +132,8 @@ export default function NewEquivalenceScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(NewEquivalenceScreen, 'equivalences');
 
 const styles = StyleSheet.create({
   form: {

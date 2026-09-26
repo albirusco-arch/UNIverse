@@ -16,6 +16,8 @@ type SheetConfig = {
   title?: string;
   message?: string;
   options: SheetOption[];
+  /** Label of the dismiss button (default "Cancel"). */
+  cancelLabel?: string;
 };
 
 type Feedback = {
@@ -84,7 +86,7 @@ export function FeedbackProvider({ children }: { children: ReactNode }) {
                 accessibilityRole="button"
                 style={({ pressed }) => [styles.option, styles.cancel, pressed && { opacity: 0.8 }]}>
                 <Text variant="bodyStrong" align="center" color="textSecondary">
-                  {t('common.cancel')}
+                  {sheet?.cancelLabel ?? t('common.cancel')}
                 </Text>
               </Pressable>
             </View>

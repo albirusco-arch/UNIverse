@@ -3,6 +3,7 @@ import { MessageCirclePlus, RotateCcw, SearchX, Sparkles } from 'lucide-react-na
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { LogoMark } from '@/components/brand';
 import { ResearchReportView } from '@/components/research-report';
 import { Button, Card, EmptyState, Header, Screen, Text } from '@/components/ui';
@@ -56,7 +57,7 @@ function describe(research: Research): string {
   }
 }
 
-export default function ResearchScreen() {
+function ResearchScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: research, loading, refresh } = useQuery(() => getResearch(id), [id]);
   const pending = research?.status === 'pending' || research?.status === 'running';
@@ -119,6 +120,8 @@ export default function ResearchScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(ResearchScreen, 'research');
 
 const styles = StyleSheet.create({
   loader: {

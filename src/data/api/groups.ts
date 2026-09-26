@@ -8,13 +8,15 @@ import { demoReplies, type DemoGroup } from '../demo/social';
 import type { Group, GroupKind, GroupMessage, GroupVisibility } from '../types';
 
 import {
-  type AuthorColumns,
   demoMe,
+  isDemoGuest,
   isDemoMode,
   mapAuthor,
   notifyChange,
   requireClient,
+  requireDemoStudent,
   requireUserId,
+  type AuthorColumns,
 } from './core';
 import { demo } from './demo-store';
 
@@ -91,6 +93,7 @@ const byActivity = (a: Group, b: Group) => (b.lastMessageAt ?? '').localeCompare
 // Queries
 
 export async function listMyGroups(): Promise<Group[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) return demo.groups.map(demoView).filter((g) => g.myRole !== null).sort(byActivity);
   const { data, error } = await requireClient()
     .from('group_directory')
@@ -104,6 +107,7 @@ export async function listMyGroups(): Promise<Group[]> {
 export type DiscoverFilter = { query?: string; kind?: GroupKind; universityId?: string };
 
 export async function discoverGroups(filter: DiscoverFilter = {}): Promise<Group[]> {
+  if (isDemoGuest()) return [];
   const q = filter.query?.trim().toLowerCase() ?? '';
   if (isDemoMode) {
     return demo.groups
@@ -129,6 +133,7 @@ export async function discoverGroups(filter: DiscoverFilter = {}): Promise<Group
 }
 
 export async function getGroup(id: string): Promise<Group | null> {
+  if (isDemoGuest()) return null;
   if (isDemoMode) {
     const group = demo.groups.find((g) => g.id === id);
     return group ? demoView(group) : null;
@@ -139,6 +144,7 @@ export async function getGroup(id: string): Promise<Group | null> {
 }
 
 export async function listMessages(groupId: string): Promise<GroupMessage[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) {
     return demo.messages.filter((m) => m.groupId === groupId && !demo.blocked.has(m.author.id));
   }
@@ -176,6 +182,7 @@ export async function createGroup(input: {
   visibility: GroupVisibility;
   universityId: string | null;
 }): Promise<string> {
+  requireDemoStudent();
   if (isDemoMode) {
     const id = `local-group-${Date.now()}`;
     demo.groups.unshift({
@@ -212,6 +219,7 @@ export async function createGroup(input: {
 }
 
 export async function joinGroup(groupId: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     joinDemo(findDemoGroup(groupId));
   } else {
@@ -227,6 +235,7 @@ export async function joinGroup(groupId: string) {
 export class InvalidInviteCodeError extends Error {}
 
 export async function joinGroupWithCode(code: string): Promise<string> {
+  requireDemoStudent();
   const normalized = code.trim().toUpperCase();
   if (isDemoMode) {
     const group = demo.groups.find((g) => g.inviteCode === normalized);
@@ -247,6 +256,7 @@ export async function joinGroupWithCode(code: string): Promise<string> {
 
 /** Opens the chat of a club, creating it on first use. */
 export async function openClubGroup(clubId: string, clubName: string): Promise<string> {
+  requireDemoStudent();
   if (isDemoMode) {
     let group = demo.groups.find((g) => g.clubId === clubId);
     if (!group) {
@@ -282,6 +292,7 @@ export async function openClubGroup(clubId: string, clubName: string): Promise<s
 }
 
 export async function leaveGroup(groupId: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     const group = findDemoGroup(groupId);
     group.memberIds = group.memberIds.filter((id) => id !== demoMe.id);
@@ -295,6 +306,7 @@ export async function leaveGroup(groupId: string) {
 }
 
 export async function sendMessage(groupId: string, body: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     const group = findDemoGroup(groupId);
     demo.messages.push({ id: `local-${Date.now()}`, groupId, author: demoMe, body, createdAt: new Date().toISOString() });
@@ -318,6 +330,7 @@ export async function sendMessage(groupId: string, body: string) {
 }
 
 export async function deleteMessage(messageId: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     demo.messages = demo.messages.filter((m) => m.id !== messageId);
   } else {
@@ -328,6 +341,7 @@ export async function deleteMessage(messageId: string) {
 }
 
 export async function markGroupRead(groupId: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     demo.readAt.set(groupId, new Date().toISOString());
     return;

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { requireAccount } from '@/components/account-gate';
 import { useFeedback, type SheetOption } from '@/components/feedback';
 import { GroupAvatar } from '@/components/group-row';
 import { Button, GlowBackground, Text } from '@/components/ui';
@@ -173,7 +174,7 @@ function Composer({ group }: { group: Group }) {
   );
 }
 
-export default function GroupChatScreen() {
+function GroupChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const { showSheet, toast } = useFeedback();
@@ -309,6 +310,8 @@ export default function GroupChatScreen() {
     </View>
   );
 }
+
+export default requireAccount(GroupChatScreen, 'groups');
 
 const styles = StyleSheet.create({
   root: {

@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { useFeedback } from '@/components/feedback';
 import { Button, Chip, ChipRow, Header, Input, Screen, Text } from '@/components/ui';
 import { getUniversity, suggestClub } from '@/data/api';
@@ -16,7 +17,7 @@ function normalizeUrl(value: string): string {
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
-export default function NewClubScreen() {
+function NewClubScreen() {
   const { universityId } = useLocalSearchParams<{ universityId: string }>();
   const university = getUniversity(universityId);
   const { toast } = useFeedback();
@@ -95,6 +96,8 @@ export default function NewClubScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(NewClubScreen, 'clubs');
 
 const styles = StyleSheet.create({
   form: {

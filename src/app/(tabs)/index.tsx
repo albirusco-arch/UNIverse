@@ -2,22 +2,27 @@ import { router } from 'expo-router';
 import {
   ArrowLeftRight,
   ArrowRight,
+  Compass,
   GraduationCap,
+  LogIn,
   Plane,
+  Settings,
   ShieldCheck,
   Sparkles,
+  UserPlus,
   Users,
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useRequireAccount } from '@/components/account-gate';
 import { Wordmark } from '@/components/brand';
 import { GradientText } from '@/components/gradient-text';
 import { GroupRow } from '@/components/group-row';
 import { PostCard } from '@/components/post-card';
 import { ScoreRing } from '@/components/score';
-import { Avatar, Button, Card, DemoBadge, IconTile, Screen, SectionHeader, Text } from '@/components/ui';
+import { Avatar, Button, Card, DemoBadge, IconButton, IconTile, Screen, SectionHeader, Text } from '@/components/ui';
 import { getUniversity, listForYou, listMyGroups, listScores } from '@/data/api';
 import type { ResearchKind, University, UniversityScore } from '@/data/types';
 import { t } from '@/i18n';
@@ -96,6 +101,26 @@ function PlanCard() {
   );
 }
 
+/** Shown to guests instead of the exchange plan. */
+function GuestCard() {
+  return (
+    <Card tone="primary" style={styles.planCard}>
+      <Text variant="title3">{t('guest.homeTitle')}</Text>
+      <Text variant="callout" color="textSecondary">
+        {t('guest.homeBody')}
+      </Text>
+      <View style={styles.planActions}>
+        <Button
+          title={t('welcome.signup')}
+          icon={UserPlus}
+          onPress={() => router.push({ pathname: '/auth', params: { mode: 'signup' } })}
+        />
+        <Button title={t('guest.browse')} icon={Compass} variant="secondary" onPress={() => router.navigate('/explore')} />
+      </View>
+    </Card>
+  );
+}
+
 function TopRatedCard({ university, score }: { university: University; score: UniversityScore }) {
   return (
     <Pressable
@@ -118,7 +143,8 @@ function TopRatedCard({ university, score }: { university: University; score: Un
 }
 
 export default function HomeScreen() {
-  const { profile } = useSession();
+  const { profile, signedIn } = useSession();
+  const requireAccount = useRequireAccount();
 
   const { data: scores } = useQuery(listScores, []);
   const { data: groups } = useQuery(listMyGroups, []);
@@ -143,9 +169,26 @@ export default function HomeScreen() {
         <Wordmark size={13} />
         <View style={styles.topRight}>
           <DemoBadge />
-          <Pressable onPress={() => router.push('/profile')} accessibilityRole="button" accessibilityLabel={t('profile.title')}>
-            <Avatar name={profile.displayName || '?'} size={40} />
-          </Pressable>
+          {signedIn ? (
+            <Pressable onPress={() => router.push('/profile')} accessibilityRole="button" accessibilityLabel={t('profile.title')}>
+              <Avatar name={profile.displayName || '?'} size={40} />
+            </Pressable>
+          ) : (
+            <>
+              <IconButton
+                label={t('settings.title')}
+                icon={<Settings size={20} color={colors.text} />}
+                onPress={() => router.push('/settings')}
+              />
+              <Button
+                title={t('welcome.login')}
+                icon={LogIn}
+                variant="secondary"
+                size="sm"
+                onPress={() => router.push({ pathname: '/auth', params: { mode: 'login' } })}
+              />
+            </>
+          )}
         </View>
       </View>
 
@@ -159,7 +202,7 @@ export default function HomeScreen() {
         <GradientText text={t('welcome.accent')} style={type.display} />
       </View>
 
-      <PlanCard />
+      {signedIn ? <PlanCard /> : <GuestCard />}
 
       <View style={styles.section}>
         <SectionHeader title={t('home.aiTitle')} />
@@ -167,7 +210,9 @@ export default function HomeScreen() {
           {aiShortcuts.map((item) => (
             <Pressable
               key={item.kind}
-              onPress={() => router.navigate({ pathname: '/research', params: { kind: item.kind } })}
+              onPress={() =>
+                requireAccount('research', () => router.navigate({ pathname: '/research', params: { kind: item.kind } }))
+              }
               accessibilityRole="button"
               accessibilityLabel={t(`research.kinds.${item.kind}`)}
               style={({ pressed }) => [styles.aiItem, pressed && { opacity: 0.85 }]}>

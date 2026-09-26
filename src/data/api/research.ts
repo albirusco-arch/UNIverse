@@ -8,10 +8,12 @@ import type { Research, ResearchRequest } from '../types';
 import {
   currentUserId,
   functionErrorStatus,
+  isDemoGuest,
   isDemoMode,
   notifyChange,
   RateLimitError,
   requireClient,
+  requireDemoStudent,
   requireUserId,
   STALE_JOB_MS,
 } from './core';
@@ -44,6 +46,7 @@ function mapResearch(row: ResearchRow): Research {
 const COLUMNS = 'id,kind,status,request,report,error,created_at';
 
 export async function requestResearch(request: ResearchRequest): Promise<string> {
+  requireDemoStudent();
   if (isDemoMode) {
     const id = `demo-${Date.now()}`;
     demo.research.unshift({ ...createDemoResearch(request, id), status: 'running', report: null });
@@ -67,6 +70,7 @@ export async function requestResearch(request: ResearchRequest): Promise<string>
 }
 
 export async function getResearch(id: string): Promise<Research | null> {
+  if (isDemoGuest()) return null;
   if (isDemoMode) return demo.research.find((r) => r.id === id) ?? null;
   const { data, error } = await requireClient().from('research_requests').select(COLUMNS).eq('id', id).maybeSingle();
   if (error) throw error;
@@ -74,6 +78,7 @@ export async function getResearch(id: string): Promise<Research | null> {
 }
 
 export async function listMyResearch(): Promise<Research[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) return [...demo.research];
   if (!(await currentUserId())) return [];
   const { data, error } = await requireClient()

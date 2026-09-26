@@ -3,13 +3,15 @@ import { normalize } from '../catalogue';
 import type { Comment, Equivalence, Field, Post, ReportReason, ReportTarget, Topic } from '../types';
 
 import {
-  type AuthorColumns,
   demoMe,
+  isDemoGuest,
   isDemoMode,
   mapAuthor,
   notifyChange,
   requireClient,
+  requireDemoStudent,
   requireUserId,
+  type AuthorColumns,
 } from './core';
 import { demo, updateDemoPost } from './demo-store';
 
@@ -91,6 +93,7 @@ export type PostFilter = {
 };
 
 export async function listPosts(filter: PostFilter = {}): Promise<Post[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) {
     const q = normalize(filter.query ?? '');
     return visibleDemoPosts()
@@ -120,6 +123,7 @@ export async function listPosts(filter: PostFilter = {}): Promise<Post[]> {
 }
 
 export async function getPost(id: string): Promise<Post | null> {
+  if (isDemoGuest()) return null;
   if (isDemoMode) return visibleDemoPosts().find((p) => p.id === id) ?? null;
   const { data, error } = await requireClient().from('post_feed').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
@@ -132,6 +136,7 @@ export async function createPost(input: {
   universityId: string | null;
   field: Field | null;
 }): Promise<string> {
+  requireDemoStudent();
   if (isDemoMode) {
     const id = `local-${Date.now()}`;
     demo.posts.unshift({
@@ -165,6 +170,7 @@ export async function createPost(input: {
 }
 
 export async function deletePost(id: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     demo.posts = demo.posts.filter((p) => p.id !== id);
   } else {
@@ -175,6 +181,7 @@ export async function deletePost(id: string) {
 }
 
 export async function setPostLiked(post: Post, liked: boolean) {
+  requireDemoStudent();
   if (isDemoMode) {
     updateDemoPost(post.id, (p) =>
       p.likedByMe === liked ? p : { ...p, likedByMe: liked, likeCount: p.likeCount + (liked ? 1 : -1) },
@@ -191,6 +198,7 @@ export async function setPostLiked(post: Post, liked: boolean) {
 }
 
 export async function setPostSaved(post: Post, saved: boolean) {
+  requireDemoStudent();
   if (isDemoMode) {
     updateDemoPost(post.id, (p) => ({ ...p, savedByMe: saved }));
   } else {
@@ -205,6 +213,7 @@ export async function setPostSaved(post: Post, saved: boolean) {
 }
 
 export async function listComments(postId: string): Promise<Comment[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) {
     return demo.comments
       .filter((c) => c.postId === postId && !demo.blocked.has(c.author.id))
@@ -226,6 +235,7 @@ export async function listComments(postId: string): Promise<Comment[]> {
 }
 
 export async function createComment(postId: string, body: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     demo.comments.push({
       id: `local-${Date.now()}`,
@@ -249,6 +259,7 @@ export async function createComment(postId: string, body: string) {
 // Moderation (App Store Review Guideline 1.2: report + block for user content)
 
 export async function reportContent(targetType: ReportTarget, targetId: string, reason: ReportReason) {
+  requireDemoStudent();
   if (isDemoMode) return;
   const userId = await requireUserId();
   const { error } = await requireClient()
@@ -261,6 +272,7 @@ export async function reportContent(targetType: ReportTarget, targetId: string, 
 }
 
 export async function blockUser(userId: string) {
+  requireDemoStudent();
   if (isDemoMode) {
     demo.blocked.add(userId);
   } else {
@@ -277,6 +289,7 @@ export async function blockUser(userId: string) {
 // Equivalences
 
 export async function listEquivalences(filter: { destinationId?: string } = {}): Promise<Equivalence[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) {
     return demo.equivalences
       .filter((e) => !filter.destinationId || e.destinationId === filter.destinationId)
@@ -291,6 +304,7 @@ export async function listEquivalences(filter: { destinationId?: string } = {}):
 }
 
 export async function createEquivalence(input: Omit<Equivalence, 'id' | 'submittedBy' | 'createdAt'>) {
+  requireDemoStudent();
   if (isDemoMode) {
     demo.equivalences.unshift({
       ...input,

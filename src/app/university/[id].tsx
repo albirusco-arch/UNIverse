@@ -17,6 +17,7 @@ import {
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { SignInCard, useRequireAccount } from '@/components/account-gate';
 import { ClubCard } from '@/components/club-card';
 import { EquivalenceCard } from '@/components/equivalence-card';
 import { GroupRow } from '@/components/group-row';
@@ -41,6 +42,7 @@ import type { Post, Topic } from '@/data/types';
 import { t } from '@/i18n';
 import { flagEmoji, hostname } from '@/lib/format';
 import { scoreTier } from '@/lib/scores';
+import { useSession } from '@/lib/session';
 import { useQuery } from '@/lib/use-query';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -63,6 +65,8 @@ export default function UniversityScreen() {
   const { id, tab: initialTab } = useLocalSearchParams<{ id: string; tab?: Tab }>();
   const university = getUniversity(id);
   const [tab, setTab] = useState<Tab>(initialTab ?? 'overview');
+  const { signedIn } = useSession();
+  const requireAccount = useRequireAccount();
 
   const { data: posts } = useQuery(() => listPosts({ universityId: id }), [id]);
   const { data: equivalences } = useQuery(() => listEquivalences({ destinationId: id }), [id]);
@@ -88,16 +92,20 @@ export default function UniversityScreen() {
   const score = scores?.[university.id];
 
   const research = (kind: 'exchange' | 'admission') =>
-    router.navigate({ pathname: '/research', params: { kind, destinationId: university.id } });
+    requireAccount('research', () =>
+      router.navigate({ pathname: '/research', params: { kind, destinationId: university.id } }),
+    );
   const compose = (topic: Topic) =>
     router.push({ pathname: '/post/new', params: { universityId: university.id, topic } });
   const addEquivalence = () => router.push({ pathname: '/equivalence/new', params: { destinationId: university.id } });
   const createGroup = () => router.push({ pathname: '/group/new', params: { universityId: university.id } });
-  const suggestClub = () => router.push({ pathname: '/club/new', params: { universityId: university.id } });
-  const toggleSaved = () => {
-    if (!saved) trackSignal('save_university', university.id);
-    setUniversitySaved(university.id, !saved).catch(() => undefined);
-  };
+  const suggestClub = () =>
+    requireAccount('clubs', () => router.push({ pathname: '/club/new', params: { universityId: university.id } }));
+  const toggleSaved = () =>
+    requireAccount('save', () => {
+      if (!saved) trackSignal('save_university', university.id);
+      setUniversitySaved(university.id, !saved).catch(() => undefined);
+    });
 
   const header = (
     <Header
@@ -190,19 +198,21 @@ export default function UniversityScreen() {
             <ChevronRight size={18} color={colors.textMuted} />
           </Card>
 
-          <View>
-            <SectionHeader title={t('university.groups')} />
-            <Card style={styles.groupsCard}>
-              {groups && groups.length > 0 ? (
-                groups.slice(0, 3).map((group) => <GroupRow key={group.id} group={group} />)
-              ) : (
-                <Text variant="callout" color="textMuted" style={styles.groupsEmpty}>
-                  {t('university.noGroups')}
-                </Text>
-              )}
-              <Button title={t('university.createGroup')} icon={Plus} variant="ghost" size="sm" onPress={createGroup} />
-            </Card>
-          </View>
+          {signedIn && (
+            <View>
+              <SectionHeader title={t('university.groups')} />
+              <Card style={styles.groupsCard}>
+                {groups && groups.length > 0 ? (
+                  groups.slice(0, 3).map((group) => <GroupRow key={group.id} group={group} />)
+                ) : (
+                  <Text variant="callout" color="textMuted" style={styles.groupsEmpty}>
+                    {t('university.noGroups')}
+                  </Text>
+                )}
+                <Button title={t('university.createGroup')} icon={Plus} variant="ghost" size="sm" onPress={createGroup} />
+              </Card>
+            </View>
+          )}
 
           <View>
             <SectionHeader title={t('university.officialLinks')} />
@@ -216,26 +226,30 @@ export default function UniversityScreen() {
             </Card>
           </View>
 
-          <View>
-            <SectionHeader
-              title={t('university.studentsSay')}
-              action={posts?.length ? t('common.seeAll') : undefined}
-              onAction={() => setTab('community')}
-            />
-            {posts && posts.length > 0 ? (
-              <PostCard post={posts[0]} />
-            ) : (
-              <Text variant="callout" color="textMuted">
-                {t('university.noPosts')}
-              </Text>
-            )}
-          </View>
+          {signedIn && (
+            <View>
+              <SectionHeader
+                title={t('university.studentsSay')}
+                action={posts?.length ? t('common.seeAll') : undefined}
+                onAction={() => setTab('community')}
+              />
+              {posts && posts.length > 0 ? (
+                <PostCard post={posts[0]} />
+              ) : (
+                <Text variant="callout" color="textMuted">
+                  {t('university.noPosts')}
+                </Text>
+              )}
+            </View>
+          )}
         </View>
       )}
 
       {tab === 'quality' && <QualityPanel university={university} />}
 
-      {tab === 'courses' && (
+      {tab === 'courses' && !signedIn && <SignInCard feature="equivalences" />}
+
+      {tab === 'courses' && signedIn && (
         <View style={styles.stack}>
           <View>
             <Text variant="title3">{t('university.equivalencesTitle')}</Text>
@@ -278,7 +292,9 @@ export default function UniversityScreen() {
         </View>
       )}
 
-      {tab === 'community' && (
+      {tab === 'community' && !signedIn && <SignInCard feature="community" />}
+
+      {tab === 'community' && signedIn && (
         <PostList
           posts={posts}
           empty={t('university.noPosts')}

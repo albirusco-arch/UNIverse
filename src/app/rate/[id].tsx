@@ -3,6 +3,7 @@ import { Star } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { useFeedback } from '@/components/feedback';
 import { StarInput } from '@/components/score';
 import { Button, Card, Chip, ChipRow, Header, Input, Screen, Text } from '@/components/ui';
@@ -80,7 +81,7 @@ function RatingForm({ universityId, initial }: { universityId: string; initial: 
   );
 }
 
-export default function RateScreen() {
+function RateScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const university = getUniversity(id);
   const { data: existing, loading } = useQuery(() => getMyRating(id), [id]);
@@ -95,6 +96,8 @@ export default function RateScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(RateScreen, 'rate');
 
 const styles = StyleSheet.create({
   body: {

@@ -3,12 +3,13 @@ import { KeyRound } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { Button, Header, Input, Screen, Text } from '@/components/ui';
 import { InvalidInviteCodeError, joinGroupWithCode } from '@/data/api';
 import { t } from '@/i18n';
 import { spacing } from '@/theme/tokens';
 
-export default function JoinGroupScreen() {
+function JoinGroupScreen() {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,6 +58,8 @@ export default function JoinGroupScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(JoinGroupScreen, 'groups');
 
 const styles = StyleSheet.create({
   form: {

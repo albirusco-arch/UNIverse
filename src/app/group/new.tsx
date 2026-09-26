@@ -3,6 +3,7 @@ import { Lock, Megaphone, Plus, Users, type LucideIcon } from 'lucide-react-nati
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { useFeedback } from '@/components/feedback';
 import { UniversityPicker } from '@/components/university-picker';
 import { Button, Header, Input, Screen, Text } from '@/components/ui';
@@ -38,7 +39,7 @@ function Option({
   );
 }
 
-export default function NewGroupScreen() {
+function NewGroupScreen() {
   const params = useLocalSearchParams<{ universityId?: string }>();
   const { profile } = useSession();
   const { toast } = useFeedback();
@@ -120,6 +121,8 @@ export default function NewGroupScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(NewGroupScreen, 'groups');
 
 const styles = StyleSheet.create({
   form: {

@@ -3,6 +3,7 @@ import { MessageCircle, MoreHorizontal, SearchX, Send } from 'lucide-react-nativ
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { AuthorLine, PostCard } from '@/components/post-card';
 import { Card, EmptyState, Header, Screen, SectionHeader, Text } from '@/components/ui';
 import { createComment, getPost, listComments } from '@/data/api';
@@ -11,7 +12,7 @@ import { useModeration } from '@/lib/use-moderation';
 import { useQuery } from '@/lib/use-query';
 import { colors, radius, spacing } from '@/theme/tokens';
 
-export default function PostScreen() {
+function PostScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: post, loading } = useQuery(() => getPost(id), [id]);
   const { data: comments } = useQuery(() => listComments(id), [id]);
@@ -91,6 +92,8 @@ export default function PostScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(PostScreen, 'community');
 
 const styles = StyleSheet.create({
   comments: {

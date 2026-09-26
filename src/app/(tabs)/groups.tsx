@@ -3,6 +3,7 @@ import { KeyRound, MessageCircle, Plus, Search } from 'lucide-react-native';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { SignInScreen } from '@/components/account-gate';
 import { GroupRow } from '@/components/group-row';
 import { Segmented } from '@/components/segmented';
 import { Button, Card, Chip, ChipScroller, DemoBadge, EmptyState, IconButton, Input, Screen, Text } from '@/components/ui';
@@ -16,7 +17,7 @@ import { colors, spacing } from '@/theme/tokens';
 type Section = 'mine' | 'discover';
 type Filter = 'all' | GroupKind | 'destination';
 
-export default function GroupsTab() {
+function GroupsTabContent() {
   const { profile } = useSession();
   const [view, setView] = useState<Section>('mine');
   const [query, setQuery] = useState('');
@@ -122,6 +123,12 @@ export default function GroupsTab() {
       )}
     </Screen>
   );
+}
+
+export default function GroupsTab() {
+  const { signedIn } = useSession();
+  if (!signedIn) return <SignInScreen feature="groups" title={t('groups.title')} />;
+  return <GroupsTabContent />;
 }
 
 const styles = StyleSheet.create({

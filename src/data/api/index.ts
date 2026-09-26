@@ -14,6 +14,7 @@ export {
 } from '../catalogue';
 export {
   AuthRequiredError,
+  currentUserId,
   isDemoMode,
   notifyChange,
   RateLimitError,

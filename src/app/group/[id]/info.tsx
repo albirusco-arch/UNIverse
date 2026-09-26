@@ -2,6 +2,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Flag, GraduationCap, LogOut, SearchX, Share2 } from 'lucide-react-native';
 import { ActivityIndicator, Share, StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { useFeedback } from '@/components/feedback';
 import { GroupAvatar } from '@/components/group-row';
 import { Badge, Card, EmptyState, Header, ListRow, Screen, Text } from '@/components/ui';
@@ -11,7 +12,7 @@ import { useModeration } from '@/lib/use-moderation';
 import { useQuery } from '@/lib/use-query';
 import { colors, radius, spacing } from '@/theme/tokens';
 
-export default function GroupInfoScreen() {
+function GroupInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: group, loading } = useQuery(() => getGroup(id), [id]);
   const { showSheet, toast } = useFeedback();
@@ -100,6 +101,8 @@ export default function GroupInfoScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(GroupInfoScreen, 'groups');
 
 const styles = StyleSheet.create({
   loader: {

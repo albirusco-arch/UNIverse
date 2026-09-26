@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { ArrowRight, BadgeCheck, Bookmark, LogOut, Pencil, Settings, Sparkles } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { requireAccount } from '@/components/account-gate';
 import { UniversityCard } from '@/components/university-card';
 import { Avatar, Badge, Card, Divider, EmptyState, Header, ListRow, Screen, SectionHeader, Text } from '@/components/ui';
 import {
@@ -31,7 +32,7 @@ function Stat({ value, label }: { value: number; label: string }) {
   );
 }
 
-export default function ProfileScreen() {
+function ProfileScreen() {
   const { profile, email, signOut } = useSession();
   const destination = getUniversity(profile.destinationId);
 
@@ -151,6 +152,8 @@ export default function ProfileScreen() {
     </Screen>
   );
 }
+
+export default requireAccount(ProfileScreen, 'profile');
 
 const styles = StyleSheet.create({
   hero: {

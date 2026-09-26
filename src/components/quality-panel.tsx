@@ -3,6 +3,7 @@ import { Info, Leaf, RefreshCw, SearchX, Sparkles, Star } from 'lucide-react-nat
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { useRequireAccount } from '@/components/account-gate';
 import { SourceChips, SourceList, VerificationBadge } from '@/components/research-report';
 import { ScoreBar, ScoreRing, Stars, tierColors, TopRatedBadge } from '@/components/score';
 import { Badge, Button, Card, SectionHeader, Text } from '@/components/ui';
@@ -29,25 +30,27 @@ export function QualityPanel({ university }: { university: University }) {
   const { data: myRating } = useQuery(() => getMyRating(id), [id]);
   const [requesting, setRequesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requireAccount = useRequireAccount();
 
   const score = scores?.[id];
   const running = insights?.status === 'pending' || insights?.status === 'running';
   const stale = insights?.checkedAt ? isOlderThan(insights.checkedAt, REFRESH_AFTER_DAYS) : false;
 
-  const research = async () => {
-    setError(null);
-    setRequesting(true);
-    try {
-      await requestInsights(id);
-      refresh();
-    } catch (err) {
-      setError(err instanceof RateLimitError ? t('common.limit') : t('common.error'));
-    } finally {
-      setRequesting(false);
-    }
-  };
+  const research = () =>
+    requireAccount('research', async () => {
+      setError(null);
+      setRequesting(true);
+      try {
+        await requestInsights(id);
+        refresh();
+      } catch (err) {
+        setError(err instanceof RateLimitError ? t('common.limit') : t('common.error'));
+      } finally {
+        setRequesting(false);
+      }
+    });
 
-  const rate = () => router.push({ pathname: '/rate/[id]', params: { id } });
+  const rate = () => requireAccount('rate', () => router.push({ pathname: '/rate/[id]', params: { id } }));
 
   return (
     <View style={styles.stack}>

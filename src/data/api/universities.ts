@@ -17,10 +17,12 @@ import type {
 import {
   currentUserId,
   functionErrorStatus,
+  isDemoGuest,
   isDemoMode,
   notifyChange,
   RateLimitError,
   requireClient,
+  requireDemoStudent,
   requireUserId,
   STALE_JOB_MS,
 } from './core';
@@ -30,6 +32,7 @@ import { demo } from './demo-store';
 // Saved universities and stats
 
 export async function getUniversityStats(): Promise<Record<string, UniversityStats>> {
+  if (isDemoGuest()) return {};
   if (isDemoMode) {
     const stats: Record<string, UniversityStats> = {};
     const bump = (id: string | null, key: keyof UniversityStats) => {
@@ -51,6 +54,7 @@ export async function getUniversityStats(): Promise<Record<string, UniversitySta
 }
 
 export async function listSavedUniversityIds(): Promise<string[]> {
+  if (isDemoGuest()) return [];
   if (isDemoMode) return [...demo.savedUniversities];
   if (!(await currentUserId())) return [];
   const { data, error } = await requireClient().from('saved_universities').select('university_id');
@@ -59,6 +63,7 @@ export async function listSavedUniversityIds(): Promise<string[]> {
 }
 
 export async function setUniversitySaved(universityId: string, saved: boolean) {
+  requireDemoStudent();
   if (isDemoMode) {
     if (saved) demo.savedUniversities.add(universityId);
     else demo.savedUniversities.delete(universityId);
@@ -186,6 +191,7 @@ export async function getInsights(universityId: string): Promise<UniversityInsig
 
 /** Asks the backend to research (or refresh) the ESG and teaching insights. */
 export async function requestInsights(universityId: string): Promise<void> {
+  requireDemoStudent();
   if (isDemoMode) {
     if (!demo.insights[universityId]) {
       demo.insights[universityId] = {
@@ -225,6 +231,7 @@ export async function requestInsights(universityId: string): Promise<void> {
 // Ratings
 
 export async function getMyRating(universityId: string): Promise<UniversityRating | null> {
+  if (isDemoGuest()) return null;
   if (isDemoMode) return demo.myRatings.get(universityId) ?? null;
   const userId = await currentUserId();
   if (!userId) return null;
@@ -248,6 +255,7 @@ export async function getMyRating(universityId: string): Promise<UniversityRatin
 }
 
 export async function rateUniversity(universityId: string, rating: UniversityRating) {
+  requireDemoStudent();
   if (isDemoMode) {
     const previous = demo.myRatings.get(universityId);
     demo.myRatings.set(universityId, rating);
@@ -320,10 +328,13 @@ function mapClub(row: ClubRow): Club {
   };
 }
 
+/** Guests only see clubs found on an official page (as the anon RLS policy on clubs). */
+const visibleToGuests = (club: Pick<Club, 'source' | 'verified'>) => club.source === 'ai' && club.verified;
+
 export async function listClubs(universityId: string): Promise<Club[]> {
   if (isDemoMode) {
     return demo.clubs
-      .filter((c) => c.universityId === universityId)
+      .filter((c) => c.universityId === universityId && (!isDemoGuest() || visibleToGuests(c)))
       .map((c) => ({ ...c, groupId: demo.groups.find((g) => g.clubId === c.id)?.id ?? null }))
       .sort((a, b) => Number(b.verified) - Number(a.verified) || a.name.localeCompare(b.name));
   }
@@ -339,7 +350,7 @@ export async function listClubs(universityId: string): Promise<Club[]> {
 
 export async function getClub(id: string): Promise<Club | null> {
   if (isDemoMode) {
-    const club = demo.clubs.find((c) => c.id === id);
+    const club = demo.clubs.find((c) => c.id === id && (!isDemoGuest() || visibleToGuests(c)));
     return club ? { ...club, groupId: demo.groups.find((g) => g.clubId === id)?.id ?? null } : null;
   }
   const { data, error } = await requireClient().from('club_list').select('*').eq('id', id).maybeSingle();
@@ -348,6 +359,7 @@ export async function getClub(id: string): Promise<Club | null> {
 }
 
 export async function suggestClub(input: Pick<Club, 'universityId' | 'name' | 'category' | 'description' | 'website' | 'instagram'>) {
+  requireDemoStudent();
   if (isDemoMode) {
     demo.clubs.push({ ...input, id: `local-club-${Date.now()}`, source: 'community', sourceUrl: '', verified: false, groupId: null });
   } else {

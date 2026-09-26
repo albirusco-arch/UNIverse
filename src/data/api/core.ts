@@ -37,7 +37,7 @@ export function requireClient() {
 }
 
 export async function currentUserId(): Promise<string | null> {
-  if (isDemoMode) return demoMe.id;
+  if (isDemoMode) return demoSignedIn ? demoMe.id : null;
   const { data } = await requireClient().auth.getSession();
   return data.session?.user.id ?? null;
 }
@@ -65,7 +65,24 @@ export let demoMe: Author = {
   verified: true,
 };
 
-export function setDemoIdentity(profile: Profile) {
+let demoSignedIn = false;
+
+/**
+ * Demo mode mirrors the database rules for guests: student content (posts,
+ * equivalences, groups, saved universities, research) is for signed-in
+ * students only. True when a guest is browsing the demo.
+ */
+export function isDemoGuest(): boolean {
+  return isDemoMode && !demoSignedIn;
+}
+
+/** Throws for guests in demo mode, as RLS does on the server. */
+export function requireDemoStudent() {
+  if (isDemoGuest()) throw new AuthRequiredError();
+}
+
+export function setDemoIdentity(profile: Profile, signedIn: boolean) {
+  demoSignedIn = signedIn;
   demoMe = {
     id: 'me',
     displayName: profile.displayName || 'You',
