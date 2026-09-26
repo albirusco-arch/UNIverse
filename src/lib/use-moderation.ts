@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 
 import { useFeedback } from '@/components/feedback';
 import { blockUser, deletePost, reportContent } from '@/data/api';
-import type { Author, ReportReason } from '@/data/types';
+import type { Author, ReportReason, ReportTarget } from '@/data/types';
 import { t } from '@/i18n';
 import { useSession } from '@/lib/session';
 
@@ -19,12 +19,12 @@ export function useModeration() {
 
   const ensureSignedIn = useCallback(() => {
     if (signedIn) return true;
-    router.push('/auth');
+    router.push('/welcome');
     return false;
   }, [signedIn]);
 
   const report = useCallback(
-    (targetType: 'post' | 'comment' | 'user', targetId: string) => {
+    (targetType: ReportTarget, targetId: string) => {
       if (!ensureSignedIn()) return;
       showSheet({
         title: t('community.reportTitle'),

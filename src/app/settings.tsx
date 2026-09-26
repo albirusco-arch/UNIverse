@@ -41,7 +41,7 @@ export default function SettingsScreen() {
               await deleteAccount();
               await signOut();
               toast(t('settings.deleted'));
-              router.replace('/');
+              router.replace('/welcome');
             } catch {
               toast(t('common.error'));
             } finally {
@@ -90,7 +90,7 @@ export default function SettingsScreen() {
       <View style={styles.version}>
         <FileText size={14} color={colors.textMuted} />
         <Text variant="caption" color="textMuted">
-          UNIverse · {t('settings.version', { v: APP_VERSION })}
+          Universe · {t('settings.version', { v: APP_VERSION })}
         </Text>
       </View>
     </Screen>

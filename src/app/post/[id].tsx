@@ -56,7 +56,7 @@ export default function PostScreen() {
 
   return (
     <Screen header={<Header title={t('community.title')} />} footer={post ? composer : undefined}>
-      {!post && loading && <ActivityIndicator color={colors.violetLight} />}
+      {!post && loading && <ActivityIndicator color={colors.primaryLight} />}
       {!post && !loading && <EmptyState icon={SearchX} text={t('common.error')} />}
       {post && (
         <>
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: radius.md,
-    backgroundColor: colors.violetDeep,
+    backgroundColor: colors.primaryDeep,
     alignItems: 'center',
     justifyContent: 'center',
   },

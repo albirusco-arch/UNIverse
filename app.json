@@ -1,21 +1,18 @@
 {
   "expo": {
-    "name": "UNIverse",
+    "name": "Universe",
     "slug": "universe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "universe",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#0F172A",
+    "backgroundColor": "#070A13",
     "ios": {
       "bundleIdentifier": "com.universeapp.mobile",
       "supportsTablet": false,
       "config": {
         "usesNonExemptEncryption": false
-      },
-      "infoPlist": {
-        "CFBundleAllowMixedLocalizations": true
       },
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -44,6 +41,14 @@
             "NSPrivacyCollectedDataTypePurposes": [
               "NSPrivacyCollectedDataTypePurposeAppFunctionality"
             ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypeProductInteraction",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
           }
         ]
       }
@@ -51,7 +56,7 @@
     "android": {
       "package": "com.universeapp.mobile",
       "adaptiveIcon": {
-        "backgroundColor": "#0F172A",
+        "backgroundColor": "#070A13",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
@@ -61,20 +66,15 @@
       "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
-    "locales": {
-      "it": "./locales/it.json",
-      "en": "./locales/en.json"
-    },
     "plugins": [
       "expo-router",
-      "expo-localization",
       "expo-web-browser",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0F172A",
+          "backgroundColor": "#070A13",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 120
+          "imageWidth": 160
         }
       ]
     ],

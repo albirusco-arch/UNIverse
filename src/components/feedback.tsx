@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E293B',
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.tealBorder,
+    borderColor: colors.successBorder,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
   },

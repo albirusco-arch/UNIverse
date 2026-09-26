@@ -27,7 +27,7 @@ export function EquivalenceCard({ equivalence, destinationName }: { equivalence:
       <View style={styles.header}>
         <Badge
           icon={e.approved ? CircleCheck : CircleX}
-          tone={e.approved ? 'teal' : 'red'}
+          tone={e.approved ? 'success' : 'red'}
           label={e.approved ? t('equivalence.approved') : t('equivalence.rejected')}
         />
         <Text variant="caption" color="textMuted">

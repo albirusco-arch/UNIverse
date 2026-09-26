@@ -2,17 +2,19 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-import { fetchProfile, notifyChange, saveProfile, setDemoIdentity, universities } from '@/data/api';
+import { fetchProfile, notifyChange, saveProfile, setDemoIdentity } from '@/data/api';
 import type { Profile } from '@/data/types';
+import { universityForEmail } from '@/lib/student-email';
 import { isDemoMode, supabase } from '@/lib/supabase';
 
-const PROFILE_KEY = 'universe.profile.v1';
-const DEMO_EMAIL_KEY = 'universe.demo-email.v1';
+const PROFILE_KEY = 'universe.profile.v2';
+const DEMO_EMAIL_KEY = 'universe.demo-email.v2';
 
 const emptyProfile: Profile = {
   id: 'me',
   displayName: '',
   homeUniversity: '',
+  homeUniversityId: null,
   field: null,
   level: null,
   destinationId: null,
@@ -22,12 +24,12 @@ const emptyProfile: Profile = {
 
 type SessionState = {
   ready: boolean;
-  /** Signed in with an account (always false for guests). */
+  /** Signed in with a university email. The app requires it. */
   signedIn: boolean;
   email: string | null;
   profile: Profile;
-  /** The user has completed onboarding at least once on this device. */
-  onboarded: boolean;
+  /** Name, home university, field and level are filled in. */
+  profileComplete: boolean;
   updateProfile: (changes: Partial<Profile>) => Promise<void>;
   sendCode: (email: string) => Promise<void>;
   verifyCode: (email: string, code: string) => Promise<void>;
@@ -36,11 +38,6 @@ type SessionState = {
 };
 
 const SessionContext = createContext<SessionState | null>(null);
-
-function isUniversityEmail(email: string) {
-  const domain = email.split('@')[1]?.toLowerCase() ?? '';
-  return universities.some((u) => u.emailDomains.some((d) => domain === d || domain.endsWith(`.${d}`)));
-}
 
 async function readLocalProfile(): Promise<Profile | null> {
   try {
@@ -51,26 +48,13 @@ async function readLocalProfile(): Promise<Profile | null> {
   }
 }
 
-async function writeLocalProfile(profile: Profile) {
+async function writeLocalProfile(profile: Profile | null) {
   try {
-    await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    if (profile) await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    else await AsyncStorage.removeItem(PROFILE_KEY);
   } catch {
     // Non-fatal: the profile is kept in memory for this session.
   }
-}
-
-/** Fills empty server fields with what the user entered before signing in. */
-function mergeProfiles(server: Profile, local: Profile | null): Profile {
-  if (!local) return server;
-  return {
-    ...server,
-    displayName: server.displayName || local.displayName,
-    homeUniversity: server.homeUniversity || local.homeUniversity,
-    field: server.field ?? local.field,
-    level: server.level ?? local.level,
-    destinationId: server.destinationId ?? local.destinationId,
-    term: server.term ?? local.term,
-  };
 }
 
 export function SessionProvider({ children }: { children: ReactNode }) {
@@ -78,18 +62,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [demoEmail, setDemoEmail] = useState<string | null>(null);
   const [profile, setProfile] = useState<Profile>(emptyProfile);
-  const [onboarded, setOnboarded] = useState(false);
 
-  // Initial load: local profile, then the Supabase session if there is one.
+  // Initial load: cached profile, then the session.
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const local = await readLocalProfile();
       if (cancelled) return;
-      if (local) {
-        setProfile(local);
-        setOnboarded(true);
-      }
+      if (local) setProfile(local);
       if (isDemoMode) {
         const email = await AsyncStorage.getItem(DEMO_EMAIL_KEY).catch(() => null);
         if (!cancelled) setDemoEmail(email);
@@ -113,21 +93,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  // When signed in, the server profile is the source of truth.
+  // When signed in, the server profile (created at sign-up, linked to the
+  // university of the email) is the source of truth.
   const userId = session?.user.id;
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    (async () => {
-      const [server, local] = await Promise.all([fetchProfile(userId), readLocalProfile()]);
-      if (cancelled || !server) return;
-      const merged = mergeProfiles(server, local);
-      setProfile(merged);
-      await writeLocalProfile(merged);
-      if (JSON.stringify(merged) !== JSON.stringify(server)) {
-        await saveProfile(merged);
-      }
-    })().catch(() => undefined);
+    fetchProfile(userId)
+      .then(async (server) => {
+        if (cancelled || !server) return;
+        setProfile(server);
+        await writeLocalProfile(server);
+      })
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };
@@ -141,7 +119,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     async (changes: Partial<Profile>) => {
       const next = { ...profile, ...changes };
       setProfile(next);
-      setOnboarded(true);
       await writeLocalProfile(next);
       if (userId) await saveProfile({ ...next, id: userId });
       notifyChange();
@@ -155,22 +132,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   }, []);
 
-  const verifyCode = useCallback(
-    async (email: string, code: string) => {
-      if (!supabase) {
-        await AsyncStorage.setItem(DEMO_EMAIL_KEY, email).catch(() => undefined);
-        setDemoEmail(email);
-        await updateProfile({
-          verified: isUniversityEmail(email),
-          displayName: profile.displayName || email.split('@')[0],
-        });
-        return;
-      }
-      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
-      if (error) throw error;
-    },
-    [profile.displayName, updateProfile],
-  );
+  const verifyCode = useCallback(async (email: string, code: string) => {
+    if (!supabase) {
+      // Demo mode: mimic the database trigger that links the account to its university.
+      const university = universityForEmail(email);
+      const next: Profile = {
+        ...emptyProfile,
+        displayName: email.split('@')[0].replace(/[._]/g, ' '),
+        homeUniversity: university?.name ?? '',
+        homeUniversityId: university?.id ?? null,
+        verified: true,
+      };
+      await AsyncStorage.setItem(DEMO_EMAIL_KEY, email).catch(() => undefined);
+      await writeLocalProfile(next);
+      setProfile(next);
+      setDemoEmail(email);
+      notifyChange();
+      return;
+    }
+    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    if (error) throw error;
+  }, []);
 
   const signInWithPassword = useCallback(async (email: string, password: string) => {
     if (!supabase) return;
@@ -185,11 +167,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       await AsyncStorage.removeItem(DEMO_EMAIL_KEY).catch(() => undefined);
       setDemoEmail(null);
     }
-    const guest = { ...profile, id: 'me', verified: false };
-    setProfile(guest);
-    await writeLocalProfile(guest);
+    setProfile(emptyProfile);
+    await writeLocalProfile(null);
     notifyChange();
-  }, [profile]);
+  }, []);
 
   const value = useMemo<SessionState>(
     () => ({
@@ -197,14 +178,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       signedIn: isDemoMode ? demoEmail !== null : session !== null,
       email: isDemoMode ? demoEmail : (session?.user.email ?? null),
       profile,
-      onboarded,
+      profileComplete: Boolean(profile.displayName && profile.homeUniversity && profile.field && profile.level),
       updateProfile,
       sendCode,
       verifyCode,
       signInWithPassword,
       signOut,
     }),
-    [ready, demoEmail, session, profile, onboarded, updateProfile, sendCode, verifyCode, signInWithPassword, signOut],
+    [ready, demoEmail, session, profile, updateProfile, sendCode, verifyCode, signInWithPassword, signOut],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

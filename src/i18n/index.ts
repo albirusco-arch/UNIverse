@@ -1,18 +1,7 @@
-import { getLocales } from 'expo-localization';
-
 import en, { type Dictionary } from './en';
-import it from './it';
 
-const dictionaries = { en, it } satisfies Record<string, Dictionary>;
-export type Locale = keyof typeof dictionaries;
-
-function detectLocale(): Locale {
-  const code = getLocales()[0]?.languageCode;
-  return code === 'it' ? 'it' : 'en';
-}
-
-export const locale: Locale = detectLocale();
-const dictionary: Dictionary = dictionaries[locale];
+/** UNIVERSE ships in English. Strings stay in one dictionary so copy is easy to review. */
+const dictionary: Dictionary = en;
 
 /** Dot-separated paths to every string leaf of the dictionary. */
 type Leaves<T, Prefix extends string = ''> = {
@@ -25,12 +14,20 @@ type Leaves<T, Prefix extends string = ''> = {
 
 export type TranslationKey = Leaves<Dictionary>;
 
-export function t(key: TranslationKey, vars?: Record<string, string | number>): string {
+function lookup(key: string): string | undefined {
   let value: unknown = dictionary;
   for (const part of key.split('.')) {
-    value = (value as Record<string, unknown>)[part];
+    value = (value as Record<string, unknown> | undefined)?.[part];
   }
-  let text = typeof value === 'string' ? value : key;
+  return typeof value === 'string' ? value : undefined;
+}
+
+/**
+ * Translate `key`, replacing `{name}` placeholders. When `vars.n` is 1 and a
+ * `<key>_one` string exists, that singular form is used ("1 member").
+ */
+export function t(key: TranslationKey, vars?: Record<string, string | number>): string {
+  let text = (vars?.n === 1 ? lookup(`${key}_one`) : undefined) ?? lookup(key) ?? key;
   if (vars) {
     for (const [name, replacement] of Object.entries(vars)) {
       text = text.replaceAll(`{${name}}`, String(replacement));

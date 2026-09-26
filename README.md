@@ -1,98 +1,119 @@
-# UNIverse
+# Universe
 
-App mobile (iOS e Android) per studenti universitari e ricercatori che vanno in scambio all'estero: requisiti dei corsi ricercati da un agente AI con **fonte ufficiale per ogni voce**, community di chi ha fatto lo stesso percorso ed **equivalenze approvate** nei learning agreement.
+App mobile (iOS e Android) per studenti universitari e ricercatori che studiano all'estero — Erasmus+, scambi overseas o lauree complete. L'interfaccia è in inglese.
 
-Costruita con Expo (React Native + TypeScript), Supabase (database, login, funzioni server) e l'API di Claude (ricerca web).
+- **Solo studenti**: si entra solo con l'email universitaria (oltre 10.000 università riconosciute dal dominio).
+- **Ricerca AI con fonti**: abbinamento esami, requisiti d'ingresso, borse di studio e visti; ogni voce cita una pagina ufficiale e ciò che non è confermato viene segnalato.
+- **UNIVERSE score**: indici ESG e qualità della didattica ricercati dall'AI (conta solo l'evidenza verificata) più i voti degli studenti verificati. Le università migliori vengono promosse come «Top rated».
+- **Community personalizzata**: il feed «For you» si adatta a corsi, ricerche e università di ogni studente.
+- **Gruppi e canali** (un mix tra WhatsApp e Telegram), **club studenteschi** con chat.
 
-![Schermate di UNIverse](docs/preview.jpg)
+Costruita con Expo (React Native + TypeScript), Supabase (database, login, chat in tempo reale, funzioni server) e l'API di Claude (ricerca web).
+
+![Schermate di Universe](docs/preview.jpg)
 
 ---
 
-## Cosa è cambiato rispetto al prototipo Figma
+## Le funzioni
 
-| Prototipo Figma | App |
+| Funzione | Come funziona |
 | --- | --- |
-| Home scura, tutte le altre schermate chiare con colori diversi | Un unico tema scuro coerente (viola → teal, logo a orbita) su tutte le schermate |
-| Contenuti da ammissione USA (SAT, Early Action, tasso di ammissione) | Centrata sullo scambio: università di provenienza → destinazione, esami da far riconoscere, learning agreement |
-| Requisiti scritti a mano nell'app | **AI Course Match**: un agente cerca pagine ufficiali e cataloghi dei corsi, fa il match esame per esame e cita la fonte di ogni voce. Il server controlla che ogni fonte citata sia stata davvero aperta durante la ricerca; ciò che non è confermato su una pagina ufficiale viene segnato come «Da verificare» |
-| Numeri inventati (6.500+ università, match 92%, +24%) | Solo dati reali: studenti iscritti ed equivalenze condivise |
-| Stessa foto di Stanford per ogni università | Copertina con bandiera e colore per regione, nessuna immagine fuorviante |
-| «Rate My Professor» e dormitori come pagine separate | Recensioni e alloggi diventano argomenti della community per ogni università (evita rischi legali di diffamazione) |
-| Barra di ricerca finta, pulsanti senza azione, pagine inesistenti | Ogni elemento funziona |
-| Testo grigio poco leggibile sullo sfondo scuro | Contrasto conforme WCAG AA |
-| — | Onboarding, login con codice via email, badge «Studente verificato» per email universitarie, segnalazione e blocco utenti, eliminazione account, italiano/inglese automatici |
-
-Novità pensate per il tuo esempio (biochimica, Milano → Germania):
-
-1. **Il mio percorso**: filtro della community per destinazione e area di studio.
-2. **Equivalenze approvate**: gli studenti condividono quali esami sono stati davvero riconosciuti (o rifiutati) e in che anno accademico. L'AI Match mostra «Già approvato per N studenti» accanto ai suoi risultati: fonti ufficiali e dati reali della community insieme.
+| **Nuovo brand** | Logo «U» con orbita (`assets/brand/`), palette blu → viola su sfondo quasi nero (`src/theme/tokens.ts`), icone e splash rigenerati. |
+| **Login con email universitaria** | Codice a 6 cifre via email. L'app riconosce l'università dal dominio (anche sottodomini come `studenti.unimi.it`) e la precompila nel profilo. Il database rifiuta comunque le email non universitarie (trigger su `auth.users`): Gmail, Outlook ecc. non possono registrarsi. Domini mancanti si aggiungono in `email_allowlist`. |
+| **Ricerca AI** (tab *AI*) | Quattro tipi: *Course match* (esame per esame con il catalogo della destinazione), *Entry requirements*, *Scholarships*, *Visa* (USA, Asia, UK… e libera circolazione UE). Ogni report mostra fonti numerate, data di verifica, anno accademico, passaggi, scadenze e avvertenze. |
+| **Qualità delle università** | Scheda *Quality* di ogni università. ESG (ambientale, sociale, governance) e didattica sono ricercati da Claude su rapporti di sostenibilità, ranking e sondaggi ufficiali: un indicatore conta solo se la sua fonte è stata davvero aperta, e senza abbastanza evidenza il punteggio resta vuoto. Gli studenti votano 4 aspetti (didattica, docenti, ambiente, sostenibilità); si mostrano solo le medie. Score = ESG 35% + didattica 25% + studenti 40%; sotto i 3 voti è «provvisorio». «Top rated» = score ≥ 75 e non provvisorio. |
+| **Docenti** | Per evitare rischi di diffamazione e GDPR non ci sono pagine o voti su singoli professori: la qualità dei docenti è una delle dimensioni votate a livello di università. |
+| **Community «For you»** | Ogni ricerca, università visitata o salvata e ricerca AI diventa un segnale privato (con decadimento di 2 settimane). Il feed ordina i post per destinazione, università salvate, area di studio, parole chiave dei corsi, freschezza e interazioni, e spiega perché ogni post è lì («Your destination», «You looked at…»). |
+| **Gruppi e canali** | Gruppi dove tutti scrivono (WhatsApp) e canali dove scrivono solo gli admin (Telegram); pubblici (si trovano in *Discover*) o privati (codice invito di 8 caratteri). Messaggi in tempo reale, non letti, separatori per giorno, segnala/blocca/elimina. |
+| **Club studenteschi** | Scheda *Clubs* di ogni università: sezioni ESN, associazioni, sport. I club trovati dall'AI citano la pagina ufficiale; gli studenti possono suggerirne altri. Ogni club ha la sua chat. |
+| **Dati Erasmus e overseas** | Catalogo di 10.265 università in 200 paesi (lista *university-domains*, licenza MIT) con i domini email, più codici Erasmus dal registro europeo *Erasmus Without Paper* quando raggiungibile. Filtro Worldwide / Erasmus+ / Overseas in *Explore*. |
 
 ## Struttura
 
 ```
-src/app/                 Schermate (Expo Router)
-  (tabs)/                Home, Esplora, AI Match, Community, Profilo
-  university/[id].tsx    Pagina università (panoramica, corsi, community, vita)
-  match/[id].tsx         Report dell'AI con fonti e verifiche
-  post/…, equivalence/…  Post, commenti, nuove equivalenze
-  onboarding.tsx, auth.tsx, settings.tsx, legal/[doc].tsx
-src/components/          Design system (ui/) e componenti
-src/data/                Tipi, accesso ai dati (Supabase o demo), catalogo università
-src/i18n/                Testi in inglese e italiano
-src/legal/documents.ts   BOZZE di Termini, Privacy e Linee guida
-supabase/migrations/     Schema del database con Row Level Security
-supabase/functions/      course-match (agente AI) e delete-account
-supabase/tests/          Test del database su Postgres in memoria
+src/app/                    Schermate (Expo Router)
+  welcome.tsx, auth.tsx     Benvenuto e login con email universitaria
+  onboarding.tsx            Profilo (università già riconosciuta dall'email) e destinazione
+  (tabs)/                   Home, Explore, AI, Community, Groups
+  university/[id].tsx       Overview, Quality, Courses, Clubs, Community
+  research/[id].tsx         Report AI con fonti e verifiche
+  rate/[id].tsx             Voto all'università
+  group/…, club/…           Chat, info gruppo, nuovo gruppo, codice invito, club
+  profile.tsx, settings.tsx, legal/[doc].tsx
+src/components/             Design system (ui/) e componenti
+src/data/api/               Accesso ai dati (Supabase o demo), un file per area
+src/data/catalogue.ts       Catalogo università incluso nell'app
+src/lib/                    Sessione, riconoscimento email, score, ranking del feed
+src/legal/documents.ts      BOZZE di Termini, Privacy e Linee guida
+scripts/                    Import del catalogo università e generazione del seed
+supabase/migrations/        Schema del database con Row Level Security
+supabase/functions/         research, university-insights, delete-account
+supabase/tests/             Test del database su Postgres in memoria
 ```
 
 ## Provarla subito (modalità demo)
 
-Senza backend l'app usa dati di esempio (etichetta «Demo» in alto) e un report AI dimostrativo.
+Senza backend l'app usa dati di esempio (etichetta «Demo») e report AI dimostrativi.
 
 ```bash
 npm install
 npx expo start
 ```
 
-Inquadra il QR code con l'app **Expo Go** sul telefono. Con `w` si apre anche nel browser.
+Inquadra il QR code con **Expo Go**. In demo qualsiasi email universitaria e qualsiasi codice a 6 cifre funzionano (prova `nome@studenti.unimi.it`).
 
 ## Collegare il backend
 
-1. **Crea un progetto Supabase** su [supabase.com](https://supabase.com), preferibilmente in regione UE (GDPR).
+1. **Crea un progetto Supabase** su [supabase.com](https://supabase.com), in regione UE (GDPR).
 2. **Database**:
    ```bash
    npx supabase login
    npx supabase link --project-ref <ID-PROGETTO>
    npx supabase db push --include-seed
    ```
-   In alternativa, incolla nell'SQL Editor prima `supabase/migrations/20260926000000_init.sql` e poi `supabase/seed.sql`.
-3. **Login via email**: nei template email di Supabase (sezione *Authentication*) aggiungi `{{ .Token }}` al template «Magic Link», così arriva il codice a 6 cifre. Nelle impostazioni del provider Email imposta la lunghezza del codice (OTP) a 6.
-4. **Chiave dell'API di Claude** (da [console.anthropic.com](https://console.anthropic.com)):
+   Le migrazioni creano tabelle, regole di accesso (RLS), il controllo delle email universitarie, lo score e i gruppi; il seed carica paesi e università.
+3. **Login via email**: in *Authentication → Email Templates* aggiungi `{{ .Token }}` al template «Magic Link» (codice a 6 cifre) e imposta la lunghezza OTP a 6.
+4. **Chat in tempo reale**: già attiva (la migrazione aggiunge `group_messages` alla pubblicazione Realtime).
+5. **Chiave dell'API di Claude** (da [console.anthropic.com](https://console.anthropic.com)):
    ```bash
    npx supabase secrets set ANTHROPIC_API_KEY=sk-ant-...
-   # opzionali: COURSE_MATCH_DAILY_LIMIT=5  CLAUDE_MODEL=claude-opus-5
+   # opzionali:
+   #   RESEARCH_DAILY_LIMIT=5   ricerche AI per studente al giorno
+   #   INSIGHTS_DAILY_LIMIT=3   ricerche ESG/didattica per studente al giorno
+   #   INSIGHTS_FRESH_DAYS=90   dopo quanti giorni un'analisi ESG può essere rifatta
+   #   CLAUDE_MODEL=claude-opus-5
    ```
-5. **Funzioni server**:
+6. **Funzioni server**:
    ```bash
-   npx supabase functions deploy course-match
+   npx supabase functions deploy research
+   npx supabase functions deploy university-insights
    npx supabase functions deploy delete-account
    ```
-   Una ricerca dura di solito 1–3 minuti. Il piano Free di Supabase ferma le funzioni dopo 150 secondi, il Pro dopo 400: per la produzione serve il **piano Pro**.
-6. **App**: copia `.env.example` in `.env.local` e inserisci URL e *anon key* del progetto (*Settings → API*).
+   Una ricerca dura 1–3 minuti: il piano Free di Supabase ferma le funzioni dopo 150 secondi, quindi in produzione serve il **piano Pro**.
+7. **App**: copia `.env.example` in `.env.local` e inserisci URL e *anon key* (*Settings → API*).
 
-### Come lavora l'agente AI
+### Come lavorano gli agenti AI
 
-`supabase/functions/course-match/` riceve la richiesta, salva una riga in `course_matches` e risponde subito; la ricerca continua in background e l'app aggiorna la schermata finché il report non è pronto.
+`research` e `university-insights` salvano la richiesta, rispondono subito e continuano in background; l'app aggiorna la schermata finché il report è pronto.
 
-- Modello `claude-opus-5` con ricerca web e lettura delle pagine lato server. Se il modello rifiuta una richiesta, l'API la ripete automaticamente su un modello di riserva.
-- Il report è validato contro uno schema; se non è valido, l'agente deve correggerlo.
-- **Verifica delle fonti**: ogni URL citato viene confrontato con quelli effettivamente trovati o aperti durante la ricerca. Una voce è «Fonte ufficiale» solo se è supportata da una pagina ufficiale realmente consultata; altrimenti è «Da verificare».
-- Le ricerche identiche vengono riusate per 14 giorni e ogni utente ha un limite giornaliero (5 di default), per contenere i costi.
-- Il consumo di token e ricerche è registrato nei log della funzione. Il costo di una ricerca è indicativamente tra 0,50 e 2 $; misuralo sui primi utenti reali.
+- Modello `claude-opus-5` con ricerca web e lettura delle pagine lato server; se il modello rifiuta una richiesta, l'API la ripete su un modello di riserva.
+- Il report è validato contro uno schema (`schema.ts`); se non è valido l'agente deve correggerlo.
+- **Verifica delle fonti**: ogni URL citato è confrontato con quelli davvero trovati o aperti durante la ricerca. Una voce è «Official source» solo se poggia su una pagina ufficiale consultata; altrimenti è «To verify». Per l'ESG servono almeno 2 indicatori verificati, per la didattica almeno 1, altrimenti niente punteggio; i club senza una pagina che li citi vengono scartati.
+- Ricerche identiche sono riusate per 14 giorni, le analisi ESG per 90; limiti giornalieri per studente per contenere i costi (indicativamente 0,50–2 $ a ricerca: misuralo sui primi utenti).
+
+### Aggiornare il catalogo università
+
+```bash
+npm run import:universities   # scarica la lista mondiale + registro Erasmus (se raggiungibile)
+npm run gen:seed              # rigenera supabase/seed.sql
+npx supabase db push --include-seed
+```
+
+Le voci curate a mano sono in `scripts/data/universities.curated.json` e hanno la precedenza.
 
 ### Moderazione
 
-Segnalazioni e blocchi sono obbligatori per l'App Store nelle app con contenuti degli utenti. Un post o commento segnalato da 3 persone viene nascosto automaticamente. Le segnalazioni vanno controllate entro 24 ore:
+Post, commenti, messaggi, gruppi e club si possono segnalare; gli utenti si possono bloccare (obbligatorio per l'App Store). Un contenuto segnalato da 3 persone viene nascosto automaticamente. Le segnalazioni vanno controllate entro 24 ore:
 
 ```sql
 select * from reports where status = 'open' order by created_at;
@@ -100,39 +121,39 @@ select * from reports where status = 'open' order by created_at;
 
 ## Pubblicare sull'App Store
 
-1. **Apple Developer Program** (99 $/anno) su [developer.apple.com](https://developer.apple.com). Per iscrivere una società serve il numero D-U-N-S.
-2. Controlla il bundle ID in `app.json` (`com.universeapp.mobile`): deve essere unico, e dopo la prima pubblicazione non si può più cambiare.
-3. Collega EAS, il servizio Expo che compila l'app nel cloud (non serve un Mac):
+1. **Apple Developer Program** (99 $/anno) su [developer.apple.com](https://developer.apple.com); per una società serve il D-U-N-S.
+2. Controlla il bundle ID in `app.json` (`com.universeapp.mobile`): è unico e non si cambia dopo la prima pubblicazione.
+3. Collega EAS (compila nel cloud, non serve un Mac):
    ```bash
    npx eas-cli login
    npx eas-cli init
    npx eas-cli env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value https://... --visibility plaintext
    npx eas-cli env:create --environment production --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value ... --visibility plaintext
    npx eas-cli env:create --environment production --name EXPO_PUBLIC_SUPPORT_EMAIL --value ... --visibility plaintext
+   npx eas-cli env:create --environment production --name EXPO_PUBLIC_REVIEW_EMAIL --value ... --visibility plaintext
    ```
-4. Compila: `npx eas-cli build --platform ios --profile production` (EAS gestisce certificati e profili; ti chiederà il login Apple).
+4. Compila: `npx eas-cli build --platform ios --profile production`.
 5. Crea l'app su [App Store Connect](https://appstoreconnect.apple.com), inserisci il suo *Apple ID* in `eas.json` (`ascAppId`) e invia: `npx eas-cli submit --platform ios --latest`.
 6. Provala con **TestFlight**, poi inviala in revisione.
 
 Da preparare per la revisione Apple:
 
-- [ ] **Termini, Privacy e Linee guida**: completa le parti `[PLACEHOLDER]` in `src/legal/documents.ts`, falle rivedere da un legale e pubblicale su un sito (l'URL della privacy policy è obbligatorio).
-- [ ] **Email di supporto** (`EXPO_PUBLIC_SUPPORT_EMAIL`) e URL di supporto.
-- [ ] **Account per i revisori**: il login via codice non funziona per chi fa la revisione. Crea in Supabase un utente con password, imposta `EXPO_PUBLIC_REVIEW_EMAIL` e scrivi email e password nelle note per la revisione.
-- [ ] **Privacy dell'app** su App Store Connect: email, nome e contenuti degli utenti, collegati all'identità, nessun tracciamento (corrisponde a `PrivacyInfo` in `app.json`).
+- [ ] **Termini, Privacy e Linee guida**: completa i `[PLACEHOLDER]` in `src/legal/documents.ts`, falli rivedere da un legale e pubblicali su un sito.
+- [ ] **Email e URL di supporto** (`EXPO_PUBLIC_SUPPORT_EMAIL`).
+- [ ] **Account per i revisori**: non hanno un'email universitaria né ricevono i codici. Crea in Supabase un utente con password, aggiungi la sua email a `email_allowlist` (`insert into email_allowlist (value, note) values ('review@tuodominio.com', 'App Store review');`), imposta `EXPO_PUBLIC_REVIEW_EMAIL` e scrivi email e password nelle note per la revisione.
+- [ ] **Privacy dell'app** su App Store Connect: email, nome, contenuti degli utenti e interazioni con il prodotto (personalizzazione), collegati all'identità, nessun tracciamento (come `privacyManifests` in `app.json`).
 - [ ] **Screenshot** per iPhone da 6,9" (1320 × 2868).
-- [ ] **Classificazione per età**: dichiara che ci sono contenuti generati dagli utenti con moderazione.
-- [ ] **Note per la revisione**: spiega che l'AI cerca solo pagine pubbliche e che ogni risultato mostra la sua fonte.
+- [ ] **Classificazione per età**: contenuti generati dagli utenti e chat, con moderazione.
+- [ ] **Note per la revisione**: l'AI cerca solo pagine pubbliche e ogni risultato mostra la sua fonte; lo score è un indicatore d'opinione, non un ranking ufficiale.
 
-Per Android il procedimento è lo stesso con `--platform android` e un account Google Play Console (25 $ una tantum).
+Per Android: stesso procedimento con `--platform android` e un account Google Play Console (25 $ una tantum).
 
 ## Comandi utili
 
 ```bash
-npm run typecheck   # TypeScript per app e funzioni server
-npm run lint        # ESLint
-npm test            # test dell'agente AI (Claude simulato) e del database (Postgres in memoria)
-npm run gen:seed    # rigenera supabase/seed.sql da src/data/universities.json
+npm run typecheck             # TypeScript per app, test e funzioni server
+npm run lint                  # ESLint
+npm test                      # score, feed, email, import Erasmus, agenti AI (Claude simulato), database (Postgres in memoria)
+npm run import:universities   # aggiorna il catalogo università
+npm run gen:seed              # rigenera supabase/seed.sql dal catalogo
 ```
-
-Per aggiungere università modifica `src/data/universities.json`, esegui `npm run gen:seed` e ripeti il seed. I domini email servono per il badge «Studente verificato».

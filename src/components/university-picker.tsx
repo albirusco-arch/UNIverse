@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Input, Text } from '@/components/ui';
-import { getUniversity, searchUniversities } from '@/data/api';
+import { getUniversity, searchUniversities, type Scope } from '@/data/api';
 import type { University } from '@/data/types';
 import { flagEmoji } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
@@ -34,14 +34,15 @@ type PickerProps = {
   onChange: (id: string | null) => void;
   placeholder: string;
   excludeId?: string | null;
+  scope?: Scope;
 };
 
 /** Pick a university from the catalogue (used for destinations). */
-export function UniversityPicker({ label, value, onChange, placeholder, excludeId }: PickerProps) {
+export function UniversityPicker({ label, value, onChange, placeholder, excludeId, scope }: PickerProps) {
   const [query, setQuery] = useState('');
   const selected = getUniversity(value);
   const results = query.trim()
-    ? searchUniversities(query)
+    ? searchUniversities(query, { scope, limit: 6 })
         .filter((u) => u.id !== excludeId)
         .slice(0, 5)
     : [];
@@ -98,16 +99,18 @@ export function UniversityPicker({ label, value, onChange, placeholder, excludeI
 type SuggestProps = {
   label?: string;
   value: string;
-  onChangeText: (value: string) => void;
+  /** Called with the typed text, or with the catalogue entry the user picked. */
+  onChangeText: (value: string, university?: University) => void;
   placeholder: string;
+  hint?: string;
 };
 
-/** Free-text university name with suggestions (home universities can be anywhere). */
-export function UniversityNameInput({ label, value, onChangeText, placeholder }: SuggestProps) {
+/** Free-text university name with catalogue suggestions. */
+export function UniversityNameInput({ label, value, onChangeText, placeholder, hint }: SuggestProps) {
   const [focused, setFocused] = useState(false);
   const suggestions =
     focused && value.trim().length >= 2
-      ? searchUniversities(value)
+      ? searchUniversities(value, { limit: 5 })
           .filter((u) => u.name !== value)
           .slice(0, 4)
       : [];
@@ -117,8 +120,9 @@ export function UniversityNameInput({ label, value, onChangeText, placeholder }:
       <Input
         label={label}
         value={value}
-        onChangeText={onChangeText}
+        onChangeText={(text) => onChangeText(text)}
         placeholder={placeholder}
+        hint={hint}
         onFocus={() => setFocused(true)}
         onBlur={() => setTimeout(() => setFocused(false), 150)}
         autoCorrect={false}
@@ -126,7 +130,7 @@ export function UniversityNameInput({ label, value, onChangeText, placeholder }:
       {suggestions.length > 0 && (
         <View style={styles.results}>
           {suggestions.map((u) => (
-            <UniversityRow key={u.id} university={u} onPress={() => onChangeText(u.name)} />
+            <UniversityRow key={u.id} university={u} onPress={() => onChangeText(u.name, u)} />
           ))}
         </View>
       )}
@@ -144,9 +148,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.md,
     borderRadius: radius.md,
-    backgroundColor: colors.violetSoft,
+    backgroundColor: colors.primarySoft,
     borderWidth: 1,
-    borderColor: colors.violetBorder,
+    borderColor: colors.primaryBorder,
   },
   results: {
     marginTop: spacing.sm,

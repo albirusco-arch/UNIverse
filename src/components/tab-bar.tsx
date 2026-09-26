@@ -1,6 +1,6 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Compass, House, Sparkles, User, Users, type LucideIcon } from 'lucide-react-native';
+import { Compass, House, MessageCircle, Sparkles, Users, type LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,12 +11,12 @@ import { colors, gradients, radius } from '@/theme/tokens';
 const tabs: Record<string, { icon: LucideIcon; label: () => string; featured?: boolean }> = {
   index: { icon: House, label: () => t('tabs.home') },
   explore: { icon: Compass, label: () => t('tabs.explore') },
-  match: { icon: Sparkles, label: () => t('tabs.match'), featured: true },
+  research: { icon: Sparkles, label: () => t('tabs.research'), featured: true },
   community: { icon: Users, label: () => t('tabs.community') },
-  profile: { icon: User, label: () => t('tabs.profile') },
+  groups: { icon: MessageCircle, label: () => t('tabs.groups') },
 };
 
-/** Floating glass tab bar from the Figma prototype, with AI Match featured in the centre. */
+/** Floating glass tab bar with the AI research tab featured in the centre. */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   return (
@@ -54,12 +54,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                 </LinearGradient>
               ) : (
                 <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-                  <Icon size={20} color={focused ? colors.violetLight : colors.textMuted} strokeWidth={focused ? 2.5 : 1.9} />
+                  <Icon size={20} color={focused ? colors.primaryLight : colors.textMuted} strokeWidth={focused ? 2.5 : 1.9} />
                 </View>
               )}
               <Text
                 numberOfLines={1}
-                style={[styles.label, { color: focused ? colors.violetLight : colors.textMuted }]}>
+                style={[styles.label, { color: focused ? colors.primaryLight : colors.textMuted }]}>
                 {label}
               </Text>
             </Pressable>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconWrapActive: {
-    backgroundColor: colors.violetSoft,
+    backgroundColor: colors.primarySoft,
   },
   featured: {
     width: 40,

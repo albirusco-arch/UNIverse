@@ -1,17 +1,29 @@
 import { router } from 'expo-router';
-import { Check, KeyRound, Mail } from 'lucide-react-native';
+import { BadgeCheck, Check, KeyRound, Mail } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
-import { OrbitMark } from '@/components/brand';
+import { LogoMark } from '@/components/brand';
 import { Button, Header, Input, Screen, Text } from '@/components/ui';
 import { t } from '@/i18n';
-import { REVIEW_EMAIL } from '@/lib/config';
+import { REVIEW_EMAIL, SUPPORT_EMAIL } from '@/lib/config';
 import { useSession } from '@/lib/session';
+import { isStudentEmail, universityForEmail } from '@/lib/student-email';
 import { isDemoMode } from '@/lib/supabase';
 import { colors, spacing } from '@/theme/tokens';
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** The sign-up trigger rejects non-university addresses with this Supabase error. */
+function authErrorMessage(err: unknown): string {
+  const message = err instanceof Error ? err.message : '';
+  if (/database error saving new user|university email/i.test(message)) return t('auth.notUniversity');
+  return message || t('common.error');
+}
+
+function suggestUniversity(email: string) {
+  const subject = encodeURIComponent('University not recognised');
+  const body = encodeURIComponent(`My university email domain is not accepted: ${email.split('@')[1] ?? ''}`);
+  Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`).catch(() => undefined);
+}
 
 export default function AuthScreen() {
   const { sendCode, verifyCode, signInWithPassword } = useSession();
@@ -22,10 +34,17 @@ export default function AuthScreen() {
   const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [rejected, setRejected] = useState(false);
+
+  const normalized = email.trim().toLowerCase();
+  const detected = universityForEmail(normalized);
 
   const submitEmail = async () => {
-    const normalized = email.trim().toLowerCase();
-    if (!EMAIL_PATTERN.test(normalized)) return setError(t('auth.invalidEmail'));
+    if (!isStudentEmail(normalized)) {
+      setRejected(true);
+      return setError(t('auth.notUniversity'));
+    }
+    setRejected(false);
     if (!accepted) return setError(t('auth.acceptTerms'));
     setError(null);
     if (REVIEW_EMAIL && normalized === REVIEW_EMAIL && !isDemoMode) {
@@ -39,7 +58,7 @@ export default function AuthScreen() {
       setEmail(normalized);
       setStep('code');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(authErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -50,10 +69,10 @@ export default function AuthScreen() {
     setBusy(true);
     try {
       await signIn();
-      if (router.canGoBack()) router.back();
-      else router.replace('/');
+      // The tabs layout sends new users on to profile setup.
+      router.replace('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common.error'));
+      setError(authErrorMessage(err));
     } finally {
       setBusy(false);
     }
@@ -71,7 +90,7 @@ export default function AuthScreen() {
 
   return (
     <Screen
-      header={<Header modal />}
+      header={<Header />}
       footer={
         step === 'email' ? (
           <Button title={t('auth.sendCode')} icon={Mail} onPress={submitEmail} loading={busy} />
@@ -82,7 +101,7 @@ export default function AuthScreen() {
         )
       }>
       <View style={styles.intro}>
-        <OrbitMark size={56} />
+        <LogoMark size={72} />
         <Text variant="title1">{step === 'code' ? t('auth.codeTitle') : t('auth.title')}</Text>
         <Text variant="body" color="textSecondary">
           {step === 'code' ? t('auth.codeBody', { email }) : step === 'password' ? email : t('auth.body')}
@@ -94,7 +113,11 @@ export default function AuthScreen() {
           <Input
             label={t('auth.email')}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(value) => {
+              setEmail(value);
+              setRejected(false);
+              setError(null);
+            }}
             placeholder={t('auth.emailPlaceholder')}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -104,6 +127,14 @@ export default function AuthScreen() {
             returnKeyType="send"
             onSubmitEditing={submitEmail}
           />
+          {detected && (
+            <View style={styles.detected}>
+              <BadgeCheck size={16} color={colors.success} />
+              <Text variant="callout" color="success" style={styles.flex} numberOfLines={2}>
+                {t('auth.detected', { name: detected.name })}
+              </Text>
+            </View>
+          )}
           <Pressable
             onPress={() => setAccepted((value) => !value)}
             accessibilityRole="checkbox"
@@ -117,13 +148,13 @@ export default function AuthScreen() {
             </Text>
           </Pressable>
           <View style={styles.links}>
-            <Text variant="caption" color="violetLight" onPress={() => router.push('/legal/terms')} accessibilityRole="link">
+            <Text variant="caption" color="primaryLight" onPress={() => router.push('/legal/terms')} accessibilityRole="link">
               {t('settings.terms')}
             </Text>
-            <Text variant="caption" color="violetLight" onPress={() => router.push('/legal/guidelines')} accessibilityRole="link">
+            <Text variant="caption" color="primaryLight" onPress={() => router.push('/legal/guidelines')} accessibilityRole="link">
               {t('settings.guidelines')}
             </Text>
-            <Text variant="caption" color="violetLight" onPress={() => router.push('/legal/privacy')} accessibilityRole="link">
+            <Text variant="caption" color="primaryLight" onPress={() => router.push('/legal/privacy')} accessibilityRole="link">
               {t('settings.privacy')}
             </Text>
           </View>
@@ -170,6 +201,16 @@ export default function AuthScreen() {
           {error}
         </Text>
       )}
+      {rejected && step === 'email' && (
+        <Text
+          variant="callout"
+          color="primaryLight"
+          style={styles.suggest}
+          onPress={() => suggestUniversity(normalized)}
+          accessibilityRole="link">
+          {t('auth.missingUniversity')}
+        </Text>
+      )}
     </Screen>
   );
 }
@@ -182,6 +223,15 @@ const styles = StyleSheet.create({
   form: {
     gap: spacing.lg,
     marginTop: spacing.xxl,
+  },
+  detected: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: -spacing.sm,
+  },
+  flex: {
+    flex: 1,
   },
   terms: {
     flexDirection: 'row',
@@ -199,8 +249,8 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   checkboxChecked: {
-    backgroundColor: colors.violet,
-    borderColor: colors.violet,
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   termsText: {
     flex: 1,
@@ -218,5 +268,9 @@ const styles = StyleSheet.create({
   },
   error: {
     marginTop: spacing.lg,
+  },
+  suggest: {
+    marginTop: spacing.sm,
+    fontWeight: '600',
   },
 });

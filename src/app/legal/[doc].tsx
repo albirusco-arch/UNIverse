@@ -2,7 +2,6 @@ import { useLocalSearchParams } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { Badge, Header, Screen, Text } from '@/components/ui';
-import { locale } from '@/i18n';
 import { getLegalDoc, type LegalDocId } from '@/legal/documents';
 import { spacing } from '@/theme/tokens';
 
@@ -11,7 +10,7 @@ const DOCS: LegalDocId[] = ['terms', 'privacy', 'guidelines'];
 export default function LegalScreen() {
   const params = useLocalSearchParams<{ doc: string }>();
   const id = DOCS.includes(params.doc as LegalDocId) ? (params.doc as LegalDocId) : 'terms';
-  const doc = getLegalDoc(id, locale);
+  const doc = getLegalDoc(id);
 
   return (
     <Screen header={<Header title={doc.title} />}>

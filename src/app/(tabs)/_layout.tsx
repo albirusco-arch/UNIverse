@@ -6,8 +6,10 @@ import { useSession } from '@/lib/session';
 import { colors } from '@/theme/tokens';
 
 export default function TabsLayout() {
-  const { onboarded } = useSession();
-  if (!onboarded) return <Redirect href="/onboarding" />;
+  const { signedIn, profileComplete } = useSession();
+  // UNIVERSE is for students only: sign in with a university email first.
+  if (!signedIn) return <Redirect href="/welcome" />;
+  if (!profileComplete) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs
@@ -15,9 +17,9 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: colors.bg } }}>
       <Tabs.Screen name="index" />
       <Tabs.Screen name="explore" />
-      <Tabs.Screen name="match" />
+      <Tabs.Screen name="research" />
       <Tabs.Screen name="community" />
-      <Tabs.Screen name="profile" />
+      <Tabs.Screen name="groups" />
     </Tabs>
   );
 }

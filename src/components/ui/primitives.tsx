@@ -24,13 +24,14 @@ type CardProps = {
   style?: StyleProp<ViewStyle>;
   onPress?: () => void;
   accessibilityLabel?: string;
-  tone?: 'default' | 'violet' | 'teal' | 'amber';
+  tone?: 'default' | 'primary' | 'accent' | 'success' | 'amber';
 };
 
 const cardTones = {
   default: { backgroundColor: colors.surface, borderColor: colors.border },
-  violet: { backgroundColor: colors.violetSoft, borderColor: colors.violetBorder },
-  teal: { backgroundColor: colors.tealSoft, borderColor: colors.tealBorder },
+  primary: { backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder },
+  accent: { backgroundColor: colors.accentSoft, borderColor: colors.accentBorder },
+  success: { backgroundColor: colors.successSoft, borderColor: colors.successBorder },
   amber: { backgroundColor: colors.amberSoft, borderColor: colors.amberBorder },
 };
 
@@ -55,12 +56,14 @@ type ChipProps = {
   label: string;
   selected?: boolean;
   onPress?: () => void;
-  tone?: 'violet' | 'teal';
+  tone?: 'primary' | 'accent' | 'success';
   icon?: LucideIcon;
 };
 
-export function Chip({ label, selected = false, onPress, tone = 'violet', icon: Icon }: ChipProps) {
-  const activeColor = tone === 'violet' ? colors.violet : colors.teal;
+const chipColors = { primary: colors.primary, accent: colors.accent, success: colors.success };
+
+export function Chip({ label, selected = false, onPress, tone = 'primary', icon: Icon }: ChipProps) {
+  const activeColor = chipColors[tone];
   return (
     <Pressable
       onPress={onPress}
@@ -84,8 +87,9 @@ export function Chip({ label, selected = false, onPress, tone = 'violet', icon: 
 // Badge (static label)
 
 const badgeTones = {
-  violet: { bg: colors.violetSoft, border: colors.violetBorder, fg: colors.violetPale },
-  teal: { bg: colors.tealSoft, border: colors.tealBorder, fg: colors.tealLight },
+  primary: { bg: colors.primarySoft, border: colors.primaryBorder, fg: colors.primaryPale },
+  accent: { bg: colors.accentSoft, border: colors.accentBorder, fg: colors.accentLight },
+  success: { bg: colors.successSoft, border: colors.successBorder, fg: colors.successLight },
   amber: { bg: colors.amberSoft, border: colors.amberBorder, fg: colors.amber },
   red: { bg: colors.redSoft, border: colors.redBorder, fg: colors.red },
   neutral: { bg: colors.surfaceStrong, border: colors.border, fg: colors.textSecondary },
@@ -127,7 +131,7 @@ export function Input({ label, hint, icon: Icon, containerStyle, style, multilin
         {Icon && <Icon size={16} color={colors.textMuted} strokeWidth={2} />}
         <TextInput
           placeholderTextColor={colors.textMuted}
-          selectionColor={colors.violetLight}
+          selectionColor={colors.primaryLight}
           accessibilityLabel={label ?? rest.placeholder}
           multiline={multiline}
           style={[styles.input, multiline && styles.inputMultiline, style]}
@@ -164,10 +168,10 @@ export function SectionHeader({
       </Text>
       {action && onAction ? (
         <Pressable onPress={onAction} hitSlop={10} accessibilityRole="button" style={styles.sectionAction}>
-          <Text variant="caption" color="violetLight">
+          <Text variant="caption" color="primaryLight">
             {action}
           </Text>
-          <ChevronRight size={14} color={colors.violetLight} strokeWidth={2.4} />
+          <ChevronRight size={14} color={colors.primaryLight} strokeWidth={2.4} />
         </Pressable>
       ) : null}
     </View>
@@ -198,7 +202,7 @@ export function IconTile({
   size = 56,
 }: {
   icon: LucideIcon;
-  colors: readonly [string, string];
+  colors: readonly [string, string, ...string[]];
   size?: number;
 }) {
   return (
@@ -260,7 +264,7 @@ export function EmptyState({ icon: Icon, text, action }: { icon: LucideIcon; tex
   return (
     <View style={styles.empty}>
       <View style={styles.emptyIcon}>
-        <Icon size={22} color={colors.violetLight} strokeWidth={2} />
+        <Icon size={22} color={colors.primaryLight} strokeWidth={2} />
       </View>
       <Text variant="callout" color="textSecondary" align="center">
         {text}
@@ -373,7 +377,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 16,
-    backgroundColor: colors.violetSoft,
+    backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

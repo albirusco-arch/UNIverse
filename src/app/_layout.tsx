@@ -13,13 +13,15 @@ const theme: Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
-    primary: colors.violetLight,
+    primary: colors.primaryLight,
     background: colors.bg,
     card: colors.bg,
     text: colors.text,
     border: colors.border,
   },
 };
+
+const modal = { presentation: 'modal' } as const;
 
 function RootNavigator() {
   const { ready } = useSession();
@@ -33,10 +35,14 @@ function RootNavigator() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
-      <Stack.Screen name="auth" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="post/new" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="equivalence/new" options={{ presentation: 'modal' }} />
+      <Stack.Screen name="welcome" options={{ animation: 'fade', gestureEnabled: false }} />
+      <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+      <Stack.Screen name="post/new" options={modal} />
+      <Stack.Screen name="equivalence/new" options={modal} />
+      <Stack.Screen name="rate/[id]" options={modal} />
+      <Stack.Screen name="club/new" options={modal} />
+      <Stack.Screen name="group/new" options={modal} />
+      <Stack.Screen name="group/join" options={modal} />
     </Stack>
   );
 }

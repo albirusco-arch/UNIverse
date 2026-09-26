@@ -1,4 +1,4 @@
-import { locale, t } from '@/i18n';
+import { t } from '@/i18n';
 
 export function timeAgo(iso: string): string {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -10,7 +10,7 @@ export function timeAgo(iso: string): string {
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(locale === 'it' ? 'it-IT' : 'en-GB', {
+  return new Date(iso).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -36,4 +36,9 @@ export function hostname(url: string): string {
   } catch {
     return url;
   }
+}
+
+/** True when the ISO date is more than `days` days in the past. */
+export function isOlderThan(iso: string, days: number): boolean {
+  return Date.now() - Date.parse(iso) > days * 24 * 3_600_000;
 }

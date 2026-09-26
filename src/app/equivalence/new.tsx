@@ -117,7 +117,7 @@ export default function NewEquivalenceScreen() {
             {t('equivalence.outcome')}
           </Text>
           <ChipRow>
-            <Chip label={t('equivalence.approved')} icon={CircleCheck} tone="teal" selected={approved} onPress={() => setApproved(true)} />
+            <Chip label={t('equivalence.approved')} icon={CircleCheck} tone="accent" selected={approved} onPress={() => setApproved(true)} />
             <Chip label={t('equivalence.rejected')} icon={CircleX} selected={!approved} onPress={() => setApproved(false)} />
           </ChipRow>
         </View>

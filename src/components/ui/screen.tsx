@@ -16,34 +16,36 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 
 import { isDemoMode } from '@/lib/supabase';
+import { useSvgId } from '@/lib/use-svg-id';
 import { t } from '@/i18n';
 import { colors, gutter, radius, spacing, tabBarClearance } from '@/theme/tokens';
 
 import { Badge } from './primitives';
 import { Text } from './text';
 
-/** Soft violet/teal light blobs behind content, as in the Figma home screen. */
+/** Soft blue/violet light blobs behind content, echoing the logo gradient. */
 export function GlowBackground() {
+  const id = useSvgId('glow');
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <Svg width="100%" height={1000}>
         <Defs>
-          <RadialGradient id="glow-violet" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor="#6D28D9" stopOpacity={0.45} />
-            <Stop offset="100%" stopColor="#6D28D9" stopOpacity={0} />
+          <RadialGradient id={id('blue')} cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#3E58EF" stopOpacity={0.42} />
+            <Stop offset="100%" stopColor="#3E58EF" stopOpacity={0} />
           </RadialGradient>
-          <RadialGradient id="glow-teal" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor="#0D9488" stopOpacity={0.3} />
-            <Stop offset="100%" stopColor="#0D9488" stopOpacity={0} />
+          <RadialGradient id={id('violet')} cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#A35BF5" stopOpacity={0.28} />
+            <Stop offset="100%" stopColor="#A35BF5" stopOpacity={0} />
           </RadialGradient>
-          <RadialGradient id="glow-indigo" cx="50%" cy="50%" r="50%">
-            <Stop offset="0%" stopColor="#4F46E5" stopOpacity={0.22} />
-            <Stop offset="100%" stopColor="#4F46E5" stopOpacity={0} />
+          <RadialGradient id={id('sky')} cx="50%" cy="50%" r="50%">
+            <Stop offset="0%" stopColor="#80B8F8" stopOpacity={0.16} />
+            <Stop offset="100%" stopColor="#80B8F8" stopOpacity={0} />
           </RadialGradient>
         </Defs>
-        <Circle cx="0%" cy={0} r={260} fill="url(#glow-violet)" />
-        <Circle cx="100%" cy={300} r={200} fill="url(#glow-teal)" />
-        <Circle cx="20%" cy={640} r={160} fill="url(#glow-indigo)" />
+        <Circle cx="0%" cy={0} r={260} fill={`url(#${id('blue')})`} />
+        <Circle cx="100%" cy={300} r={200} fill={`url(#${id('violet')})`} />
+        <Circle cx="20%" cy={640} r={160} fill={`url(#${id('sky')})`} />
       </Svg>
     </View>
   );
@@ -148,7 +150,7 @@ export function IconButton({
       hitSlop={8}
       style={({ pressed }) => [
         styles.headerButton,
-        active && { backgroundColor: colors.violetSoft, borderColor: colors.violetBorder },
+        active && { backgroundColor: colors.primarySoft, borderColor: colors.primaryBorder },
         pressed && { opacity: 0.7 },
       ]}>
       {icon}

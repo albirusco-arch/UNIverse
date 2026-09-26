@@ -1,19 +1,20 @@
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { BadgeCheck, Bookmark, Heart, MessageCircle, MoreHorizontal, Plane } from 'lucide-react-native';
+import { BadgeCheck, Bookmark, Heart, MessageCircle, MoreHorizontal, Plane, Sparkles } from 'lucide-react-native';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { Avatar, Badge, Card, Text, type BadgeTone } from '@/components/ui';
 import { getUniversity, setPostLiked, setPostSaved } from '@/data/api';
 import type { Author, Post, Topic } from '@/data/types';
 import { t } from '@/i18n';
+import type { RankReason } from '@/lib/feed-ranking';
 import { timeAgo } from '@/lib/format';
 import { useModeration } from '@/lib/use-moderation';
 import { colors, spacing } from '@/theme/tokens';
 
 const topicTones: Record<Topic, BadgeTone> = {
-  question: 'violet',
-  experience: 'teal',
+  question: 'primary',
+  experience: 'success',
   housing: 'amber',
   tip: 'neutral',
 };
@@ -40,7 +41,7 @@ export function AuthorLine({ author, createdAt }: { author: Author; createdAt: s
           {author.verified && (
             <BadgeCheck
               size={16}
-              color={colors.violetLight}
+              color={colors.primaryLight}
               strokeWidth={2.4}
               accessibilityLabel={t('community.verifiedStudent')}
             />
@@ -57,14 +58,27 @@ export function AuthorLine({ author, createdAt }: { author: Author; createdAt: s
   );
 }
 
+/** Why a post is in the "For you" feed, in a few words. */
+export function reasonLabel(reason: RankReason): string {
+  switch (reason.kind) {
+    case 'interest':
+      return t('community.reasons.interest', { name: getUniversity(reason.universityId)?.name ?? '' });
+    case 'keyword':
+      return t('community.reasons.keyword', { keyword: reason.keyword });
+    default:
+      return t(`community.reasons.${reason.kind}`);
+  }
+}
+
 type PostCardProps = {
   post: Post;
+  reason?: RankReason | null;
   /** Show the full text instead of a preview (post detail screen). */
   expanded?: boolean;
   onDeleted?: () => void;
 };
 
-export function PostCard({ post, expanded = false, onDeleted }: PostCardProps) {
+export function PostCard({ post, reason, expanded = false, onDeleted }: PostCardProps) {
   const { postMenu, ensureSignedIn } = useModeration();
   const university = getUniversity(post.universityId);
 
@@ -88,6 +102,14 @@ export function PostCard({ post, expanded = false, onDeleted }: PostCardProps) {
 
   return (
     <Card style={styles.card}>
+      {reason && (
+        <View style={styles.reason}>
+          <Sparkles size={12} color={colors.accentLight} />
+          <Text variant="caption" color="accentLight" numberOfLines={1} style={styles.reasonText}>
+            {reasonLabel(reason)}
+          </Text>
+        </View>
+      )}
       <View style={styles.header}>
         <AuthorLine author={post.author} createdAt={post.createdAt} />
         <Pressable
@@ -147,8 +169,8 @@ export function PostCard({ post, expanded = false, onDeleted }: PostCardProps) {
           style={[styles.action, styles.save]}>
           <Bookmark
             size={18}
-            color={post.savedByMe ? colors.violetLight : colors.textMuted}
-            fill={post.savedByMe ? colors.violetLight : 'transparent'}
+            color={post.savedByMe ? colors.primaryLight : colors.textMuted}
+            fill={post.savedByMe ? colors.primaryLight : 'transparent'}
           />
         </Pressable>
       </View>
@@ -159,6 +181,15 @@ export function PostCard({ post, expanded = false, onDeleted }: PostCardProps) {
 const styles = StyleSheet.create({
   card: {
     gap: spacing.md,
+  },
+  reason: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: -spacing.xs,
+  },
+  reasonText: {
+    flexShrink: 1,
   },
   header: {
     flexDirection: 'row',

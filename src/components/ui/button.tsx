@@ -24,7 +24,7 @@ type ButtonProps = {
 const foreground: Record<Variant, string> = {
   primary: '#FFFFFF',
   secondary: colors.text,
-  ghost: colors.violetLight,
+  ghost: colors.primaryLight,
   danger: colors.red,
 };
 
