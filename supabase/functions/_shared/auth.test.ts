@@ -23,7 +23,7 @@ Reflect.set(globalThis, 'Deno', {
 });
 
 const handlers: Record<string, Handler> = {};
-for (const name of ['research', 'university-insights', 'delete-account']) {
+for (const name of ['research', 'university-insights', 'partner-lists', 'delete-account']) {
   await import(`../${name}/index.ts`);
   handlers[name] = served[served.length - 1];
 }

@@ -54,6 +54,7 @@
     "test": "node --test src/lib/*.test.ts src/i18n/*.test.ts scripts/lib/*.test.mjs supabase/functions/*/*.test.ts && node supabase/tests/schema.test.mjs",
     "gen:seed": "node scripts/generate-seed.mjs",
     "gen:brand": "node scripts/generate-brand-assets.mjs",
+    "import:partnerships": "node scripts/import-partnerships.mjs",
     "import:universities": "node scripts/import-universities.mjs"
   },
   "private": true

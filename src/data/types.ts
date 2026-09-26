@@ -348,3 +348,81 @@ export type Signal = {
   value: string;
   createdAt: string;
 };
+
+// ---------------------------------------------------------------------------
+// Partner-first search (supabase/migrations/20260927000100_partnerships.sql)
+
+export const AGREEMENT_TYPES = ['erasmus', 'bilateral', 'other'] as const;
+export type AgreementType = (typeof AGREEMENT_TYPES)[number];
+
+/** Degree levels an agreement is open to. */
+export type StudyLevel = 'bachelor' | 'master' | 'phd';
+
+/** admin: imported from an official list; ai: read from it by the partner-lists function; student: suggested with a link. */
+export type PartnershipSource = 'admin' | 'ai' | 'student';
+
+export type Department = {
+  id: string;
+  universityId: string;
+  name: string;
+  kind: 'faculty' | 'school' | 'department' | 'institute';
+  /** ISCED-F 2013 subject codes, e.g. "041" (business and administration). */
+  iscedCodes: string[];
+  website: string;
+  sourceUrl: string;
+  verified: boolean;
+};
+
+export type Partnership = {
+  id: string;
+  homeUniversityId: string;
+  partnerUniversityId: string;
+  agreementType: AgreementType;
+  /** Home department or faculty that owns the agreement; null = university-wide. */
+  homeDepartment: { id: string; name: string } | null;
+  /** ISCED-F subject areas covered; empty = all subjects or not stated. */
+  iscedCodes: string[];
+  levels: StudyLevel[];
+  /** ISO 639-1 languages of instruction at the partner, as the agreement states them. */
+  languages: string[];
+  /** Required language level, e.g. "B2", or empty. */
+  languageLevel: string;
+  places: number | null;
+  academicYear: string;
+  source: PartnershipSource;
+  /** Official page the agreement comes from. */
+  sourceUrl: string;
+  /** Confirmed by an admin. */
+  verified: boolean;
+  /** Date the official source was last checked. */
+  lastVerified: string | null;
+  /** Demo content: illustrative, not a real agreement. */
+  sample?: boolean;
+};
+
+export type Course = {
+  id: string;
+  universityId: string;
+  departmentId: string | null;
+  code: string;
+  title: string;
+  ects: number | null;
+  level: StudyLevel | null;
+  language: string | null;
+  term: 'fall' | 'spring' | 'year' | null;
+  iscedCode: string | null;
+  url: string;
+  sourceUrl: string;
+  verified: boolean;
+};
+
+/** Reading a home university's official partner list with AI (supabase/functions/partner-lists). */
+export type PartnerExtraction = {
+  status: 'pending' | 'running' | 'done' | 'error';
+  found: number;
+  matched: number;
+  /** Partners on the list that could not be matched to the catalogue. */
+  unmatched: string[];
+  checkedAt: string | null;
+  error: string | null;
+};

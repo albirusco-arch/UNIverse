@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import {
   ArrowLeftRight,
   Bookmark,
+  Handshake,
   LogIn,
   MessagesSquare,
   Sparkles,
@@ -21,10 +22,20 @@ import { useSession } from '@/lib/session';
 import { gradients, spacing } from '@/theme/tokens';
 
 /** Features that need an account. Guests browse the catalogue and general university info only. */
-export type GatedFeature = 'research' | 'community' | 'groups' | 'save' | 'equivalences' | 'rate' | 'clubs' | 'profile';
+export type GatedFeature =
+  | 'research'
+  | 'partners'
+  | 'community'
+  | 'groups'
+  | 'save'
+  | 'equivalences'
+  | 'rate'
+  | 'clubs'
+  | 'profile';
 
 const icons: Record<GatedFeature, LucideIcon> = {
   research: Sparkles,
+  partners: Handshake,
   community: MessagesSquare,
   groups: Users,
   save: Bookmark,

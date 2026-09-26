@@ -24,6 +24,7 @@ export {
 export * from './community';
 export * from './feed';
 export * from './groups';
+export * from './partners';
 export * from './profile';
 export * from './research';
 export * from './signals';

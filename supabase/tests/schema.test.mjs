@@ -7,6 +7,8 @@ import { PGlite } from '@electric-sql/pglite';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 
+import { agreementsSql, createResolver, readAgreements } from '../../scripts/lib/partnerships-csv.mjs';
+
 const supabaseDir = new URL('..', import.meta.url).pathname;
 const db = new PGlite();
 
@@ -277,6 +279,110 @@ await assert.rejects(
 await assert.rejects(as(null, `insert into public.clubs (university_id, name) values ('ucl', 'Guest club')`));
 await assert.rejects(as(null, `select public.create_group('Guest group', '', 'group', 'public', null)`));
 console.log('✓ guests read the catalogue, insights, scores and official-page clubs; student content and every write need an account');
+
+// ---------------------------------------------------------------------------
+// Partnerships, departments and courses (written by the backend; students suggest)
+
+const official = 'https://www.unimi.it/en/international/study-abroad/erasmus-partners';
+const [biosciences] = (
+  await db.query(
+    `insert into public.departments (university_id, name, kind, isced_codes, source, source_url, verified, last_verified)
+     values ('unimi', 'Department of Biosciences', 'department', '{051}', 'admin', $1, true, '2026-09-01') returning id`,
+    [official],
+  )
+).rows;
+const agreement = (home, partner, type, extra = {}) =>
+  db.query(
+    `insert into public.partnerships (home_university_id, partner_university_id, agreement_type, home_department_id, isced_codes, languages, source, source_url, verified, last_verified, hidden)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) returning id`,
+    [home, partner, type, extra.department ?? null, extra.isced ?? '{}', extra.languages ?? '{}', extra.source ?? 'admin', extra.url ?? official, extra.verified ?? true, extra.checked ?? '2026-09-01', extra.hidden ?? false],
+  );
+await agreement('unimi', 'heidelberg', 'erasmus', { department: biosciences.id, isced: '{051,0512}', languages: '{de,en}' });
+await agreement('unimi', 'ucl', 'erasmus', { source: 'ai', verified: false, languages: '{en}' });
+await agreement('unimi', 'unibocconi.it', 'other', { hidden: true });
+await assert.rejects(agreement('unimi', 'heidelberg', 'erasmus', { department: biosciences.id }), /duplicate key/);
+await assert.rejects(agreement('ucl', 'heidelberg', 'erasmus', { department: biosciences.id }), /foreign key/); // not a UCL department
+await assert.rejects(agreement('unimi', 'unimi', 'bilateral'), /check/);
+await assert.rejects(agreement('unimi', 'ucl', 'bilateral', { isced: '{4a}' }), /check/);
+await assert.rejects(agreement('unimi', 'ucl', 'bilateral', { languages: '{eng}' }), /check/);
+await assert.rejects(agreement('unimi', 'ucl', 'bilateral', { url: 'ftp://unimi.it/list' }), /check/);
+
+// Students suggest agreements of their own home university only, unverified and with the official link.
+const suggest = (user, home, partner, extra = {}) =>
+  as(user,
+    `insert into public.partnerships (home_university_id, partner_university_id, agreement_type, source, source_url, verified, created_by)
+     values ($1, $2, 'bilateral', $3, $4, $5, $6)`,
+    [home, partner, extra.source ?? 'student', extra.url ?? 'https://www.unimi.it/en/overseas', extra.verified ?? false, extra.as ?? user],
+  );
+await suggest(A, 'unimi', 'ucl');
+await assert.rejects(suggest(A, 'ucl', 'unimi'), /row-level security/); // not A's university
+await assert.rejects(suggest(A, 'unimi', 'heidelberg', { verified: true }), /row-level security/);
+await assert.rejects(suggest(A, 'unimi', 'heidelberg', { source: 'admin' }), /row-level security/);
+await assert.rejects(suggest(A, 'unimi', 'heidelberg', { as: B }), /row-level security/);
+await assert.rejects(suggest(A, 'unimi', 'heidelberg', { url: 'not a link' }), /check/);
+await as(A, `update public.partnerships set verified = true where source = 'student'`);
+await as(A, `delete from public.partnerships`);
+assert.equal((await db.query(`select count(*)::int as n from public.partnerships where source = 'student' and not verified`)).rows[0].n, 1);
+assert.equal((await db.query('select count(*)::int as n from public.partnerships')).rows[0].n, 4);
+
+// Guests see agreements from official lists; students also see suggestions; hidden rows nobody.
+const visible = async (user) =>
+  (await as(user, `select partner_university_id as p, agreement_type as t, source, home_department_name as d from public.partner_list where home_university_id = 'unimi' order by 1, 2, 3`)).rows;
+assert.deepEqual(await visible(null), [
+  { p: 'heidelberg', t: 'erasmus', source: 'admin', d: 'Department of Biosciences' },
+  { p: 'ucl', t: 'erasmus', source: 'ai', d: null },
+]);
+assert.equal((await visible(C)).length, 3);
+assert.equal(await count(null, `select count(*)::int as n from public.departments where university_id = 'unimi'`), 1);
+await assert.rejects(as(A, `insert into public.departments (university_id, name, source, source_url) values ('unimi', 'Fake', 'admin', $1)`, [official]));
+await db.query(
+  `insert into public.courses (university_id, department_id, code, title, ects, level, language, term, isced_code, source, source_url)
+   values ('unimi', $1, 'B12', 'Biochemistry II', 6, 'bachelor', 'it', 'spring', '0512', 'admin', $2)`,
+  [biosciences.id, official],
+);
+assert.equal(await count(null, `select count(*)::int as n from public.courses where department_id = $1`, [biosciences.id]), 1);
+await assert.rejects(as(A, `insert into public.courses (university_id, title, source, source_url) values ('unimi', 'Fake course', 'admin', $1)`, [official]));
+await assert.rejects(
+  db.query(`insert into public.courses (university_id, department_id, title, source, source_url) values ('ucl', $1, 'Wrong department', 'admin', $2)`, [biosciences.id, official]),
+  /foreign key/,
+);
+await db.query(`insert into public.partner_extractions (university_id, status, found, matched) values ('unimi', 'done', 40, 37)`);
+assert.equal(await count(null, 'select count(*)::int as n from public.partner_extractions'), 0);
+assert.equal(await count(A, 'select count(*)::int as n from public.partner_extractions'), 1);
+await assert.rejects(as(A, `insert into public.partner_extractions (university_id) values ('ucl')`));
+// Removing a department keeps its agreements, now university-wide.
+await db.query('delete from public.departments where id = $1', [biosciences.id]);
+assert.equal(
+  (await db.query(`select home_department_id, home_university_id from public.partnerships where partner_university_id = 'heidelberg'`)).rows[0].home_university_id,
+  'unimi',
+);
+assert.equal((await db.query(`select count(*)::int as n from public.courses where department_id is null and title = 'Biochemistry II'`)).rows[0].n, 1);
+console.log('✓ partnerships: official sources, departments of the home university, student suggestions unverified, guests see official lists');
+
+// The admin import (scripts/import-partnerships.mjs) produces SQL that runs and can be re-run.
+const catalogueRows = JSON.parse(readFileSync(new URL('../../src/data/universities.json', import.meta.url), 'utf8'));
+const imported = readAgreements(
+  `home_university,partner_university,agreement_type,department,isced_codes,languages,places,academic_year,source_url
+unimi,uni-heidelberg.de,erasmus,Dipartimento d'Informatica,061,de;en,2,2026/27,${official}
+unimi,ucl,other,,,en,,2026/27,${official}`,
+  createResolver(catalogueRows),
+);
+assert.deepEqual(imported.errors, []);
+const importSql = agreementsSql(imported.agreements, { today: '2026-09-27', origin: 'test.csv' });
+await db.exec(importSql);
+await db.exec(importSql);
+const importedRows = (
+  await db.query(
+    `select a.partner_university_id as p, a.agreement_type as t, a.source, a.verified, a.last_verified::text as checked, d.name as department
+     from public.partnerships a left join public.departments d on d.id = a.home_department_id
+     where a.home_university_id = 'unimi' and a.last_verified = '2026-09-27' order by 1, 2`,
+  )
+).rows;
+assert.deepEqual(importedRows, [
+  { p: 'heidelberg', t: 'erasmus', source: 'admin', verified: true, checked: '2026-09-27', department: "Dipartimento d'Informatica" },
+  { p: 'ucl', t: 'other', source: 'admin', verified: true, checked: '2026-09-27', department: null },
+]);
+console.log('✓ admin import SQL runs, confirms agreements and can be re-run');
 
 // ---------------------------------------------------------------------------
 // Account deletion cascades everything

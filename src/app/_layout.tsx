@@ -44,6 +44,7 @@ function RootNavigator() {
       <Stack.Screen name="equivalence/new" options={modal} />
       <Stack.Screen name="rate/[id]" options={modal} />
       <Stack.Screen name="club/new" options={modal} />
+      <Stack.Screen name="partner/new" options={modal} />
       <Stack.Screen name="group/new" options={modal} />
       <Stack.Screen name="group/join" options={modal} />
     </Stack>

@@ -20,6 +20,7 @@ Built with Expo (React Native + TypeScript), Supabase (database, sign-in, realti
 | --- | --- |
 | **Brand** | “U” logo with its orbit (`assets/brand/`), blue → violet palette on a near-black background (`src/theme/tokens.ts`), generated icons and splash. |
 | **Language** | English by default, Italian as a second language (`src/i18n/en.ts`, `it.ts`). The app follows the device language and can be switched in *Settings → Language*. AI research reports are written in the app language. |
+| **Partner-first search** (*Explore → My partners*) | Search starts from the exchange agreements of the student's home university, with the agreement type (Erasmus+, bilateral, other), then narrows by department or subject area (ISCED-F codes, as in Erasmus+ agreements), region and country (Europe first, then Canada, Australia, other regions, the US last), and language of instruction. Each partner shows where it comes from and when the official source was checked, and opens the AI course match for that destination. Agreements are never invented: they come from an admin import of an official list (verified), from Claude reading the home university's official partner list (`partner-lists` function: only partners on a page it actually opened, matched to the catalogue by Erasmus code, official domain or exact name, shown as “to confirm”), or from students with a link to the official page (shown as “suggested by a student”). Tables: `departments`, `partnerships`, `courses` (linked to departments). |
 | **Guests and accounts** | *Explore as guest* opens the catalogue and each university's overview, quality scores and the clubs found on official pages. AI research, posts and comments, equivalences, saving universities, ratings and groups need an account: guests get a friendly log-in / sign-up prompt. The database enforces the same rules (RLS policies for signed-out visitors) and the AI functions answer 401 without a signed-in user. |
 | **Premium (coming soon)** | *CV analysis* is visible on the AI tab but locked. There is no payment provider and no analysis yet: `src/lib/premium.ts` holds the feature flag (`EXPO_PUBLIC_FEATURE_CV_ANALYSIS`) and an entitlement-check stub to connect later. |
 | **University email sign-in** | 6-digit code by email. The app recognises the university from the domain (including subdomains such as `studenti.unimi.it`) and pre-fills it in the profile. The database also rejects non-university addresses (trigger on `auth.users`), so Gmail, Outlook and similar cannot register. Missing domains go in `email_allowlist`. |
@@ -51,7 +52,7 @@ src/lib/                    Session, language, email recognition, scores, feed r
 src/legal/documents.ts      DRAFT Terms, Privacy Policy and Guidelines (English and Italian)
 scripts/                    University catalogue import and seed generation
 supabase/migrations/        Database schema with Row Level Security
-supabase/functions/         research, university-insights, delete-account
+supabase/functions/         research, university-insights, partner-lists, delete-account
 supabase/tests/             Database tests on in-memory Postgres
 ```
 
@@ -85,12 +86,14 @@ Scan the QR code with **Expo Go**. In demo mode, *Try the demo* signs you in as 
    #   RESEARCH_DAILY_LIMIT=5   AI research requests per student per day
    #   INSIGHTS_DAILY_LIMIT=3   ESG/teaching research per student per day
    #   INSIGHTS_FRESH_DAYS=90   days before an ESG analysis can be refreshed
+   #   PARTNERS_FRESH_DAYS=30   days before a partner list can be read again
    #   CLAUDE_MODEL=claude-opus-5
    ```
 6. **Server functions**:
    ```bash
    npx supabase functions deploy research
    npx supabase functions deploy university-insights
+   npx supabase functions deploy partner-lists
    npx supabase functions deploy delete-account
    ```
    A research run takes 1–3 minutes: the Supabase Free plan stops functions after 150 seconds, so production needs the **Pro plan**.
@@ -105,6 +108,16 @@ Scan the QR code with **Expo Go**. In demo mode, *Try the demo* signs you in as 
 - **Source verification**: every cited URL is compared with the ones actually found or opened during the research. An item is “Official source” only if it rests on an official page that was consulted; otherwise it is “To verify”. ESG needs at least 2 verified indicators and teaching at least 1, otherwise there is no score; clubs without a page that mentions them are dropped.
 - Research reports are written in the app language (English or Italian); course titles and quoted requirements stay as the source writes them. ESG and teaching summaries are shared between students and stay in English.
 - Identical research is reused for 14 days and ESG analyses for 90; daily limits per student keep costs down (roughly $0.50–2 per research run: measure it with your first users).
+
+### Import partner agreements
+
+Copy an official partner list into a CSV (columns in `scripts/lib/partnerships-csv.mjs`: home and partner university as catalogue id, Erasmus code or web domain, agreement type, official link, and optionally department, ISCED codes, levels, languages, level, places, academic year), then:
+
+```bash
+npm run import:partnerships -- agreements.csv > agreements.sql
+```
+
+Rows with problems are listed by line and nothing is generated. Review the SQL and run it in the Supabase SQL editor: the agreements are marked verified with today's date, and re-running updates them.
 
 ### Update the university catalogue
 
@@ -158,7 +171,9 @@ For Android: same steps with `--platform android` and a Google Play Console acco
 ```bash
 npm run typecheck             # TypeScript for the app, tests and server functions
 npm run lint                  # ESLint
-npm test                      # scores, feed, email, translations, Erasmus import, AI agents (mocked Claude), database (in-memory Postgres)
+npm test                      # scores, feed, partner search, email, translations, imports, AI agents (mocked Claude), database (in-memory Postgres)
 npm run import:universities   # updates the university catalogue
 npm run gen:seed              # regenerates supabase/seed.sql from the catalogue
+npm run import:partnerships   # CSV of official agreements -> SQL
+npm run gen:brand             # icons, splash and logo from assets/brand/logo-original.png
 ```

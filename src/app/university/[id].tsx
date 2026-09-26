@@ -19,6 +19,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { SignInCard, useRequireAccount } from '@/components/account-gate';
 import { ClubCard } from '@/components/club-card';
+import { PartnerOfCard } from '@/components/partner-card';
 import { EquivalenceCard } from '@/components/equivalence-card';
 import { GroupRow } from '@/components/group-row';
 import { PostCard } from '@/components/post-card';
@@ -32,6 +33,7 @@ import {
   getUniversity,
   listClubs,
   listEquivalences,
+  listPartnerships,
   listPosts,
   listSavedUniversityIds,
   listScores,
@@ -65,8 +67,10 @@ export default function UniversityScreen() {
   const { id, tab: initialTab } = useLocalSearchParams<{ id: string; tab?: Tab }>();
   const university = getUniversity(id);
   const [tab, setTab] = useState<Tab>(initialTab ?? 'overview');
-  const { signedIn } = useSession();
+  const { signedIn, profile } = useSession();
   const requireAccount = useRequireAccount();
+  const homeId = signedIn ? profile.homeUniversityId : null;
+  const { data: homePartners } = useQuery(() => (homeId ? listPartnerships(homeId) : Promise.resolve([])), [homeId]);
 
   const { data: posts } = useQuery(() => listPosts({ universityId: id }), [id]);
   const { data: equivalences } = useQuery(() => listEquivalences({ destinationId: id }), [id]);
@@ -89,6 +93,8 @@ export default function UniversityScreen() {
   }
 
   const saved = savedIds?.includes(university.id) ?? false;
+  const home = getUniversity(homeId);
+  const agreements = (homePartners ?? []).filter((p) => p.partnerUniversityId === university.id);
   const score = scores?.[university.id];
 
   const research = (kind: 'exchange' | 'admission') =>
@@ -162,6 +168,8 @@ export default function UniversityScreen() {
 
       {tab === 'overview' && (
         <View style={styles.stack}>
+          {agreements.length > 0 && home && <PartnerOfCard agreements={agreements} homeName={home.name} />}
+
           <Card tone="primary" style={styles.planCard}>
             <View style={styles.planTitle}>
               <Sparkles size={18} color={colors.primaryLight} />

@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { normalizeUrl } from './sources.ts';
 
 type BetaMessage = Anthropic.Beta.Messages.BetaMessage;
+type BetaCreateParams = Anthropic.Beta.Messages.MessageCreateParamsNonStreaming;
 type BetaMessageParam = Anthropic.Beta.Messages.BetaMessageParam;
 type BetaContentBlock = Anthropic.Beta.Messages.BetaContentBlock;
 type BetaToolUseBlock = Anthropic.Beta.Messages.BetaToolUseBlock;
@@ -18,6 +19,8 @@ export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
 export const DEFAULT_MODEL = 'claude-opus-5';
 /** Model turns, counting pause_turn continuations and schema retries. */
 const MAX_TURNS = 8;
+/** Above this output limit requests are streamed, so long submissions do not hit HTTP timeouts. */
+const NON_STREAMING_MAX_TOKENS = 16000;
 
 export type AgentErrorCode = 'refusal' | 'max_tokens' | 'no_report';
 
@@ -44,6 +47,10 @@ export type AgentOptions<S extends z.ZodType> = {
   effort?: Effort;
   webSearchMaxUses?: number;
   webFetchMaxUses?: number;
+  /** Tokens of each fetched page the model reads (long PDF lists need more). */
+  webFetchMaxContentTokens?: number;
+  /** Output limit per turn (default 16k). Larger limits stream the request. */
+  maxTokens?: number;
 };
 
 export type AgentResult<T> = {
@@ -88,10 +95,13 @@ export async function runAgent<S extends z.ZodType>(options: AgentOptions<S>): P
   const inputSchema = toolInputSchema(schema);
   const messages: BetaMessageParam[] = [{ role: 'user', content: options.prompt }];
 
+  const maxTokens = options.maxTokens ?? NON_STREAMING_MAX_TOKENS;
+  const streamed = maxTokens > NON_STREAMING_MAX_TOKENS;
+
   for (let turn = 0; turn < MAX_TURNS; turn++) {
-    const response = await client.beta.messages.create({
+    const params: BetaCreateParams = {
       model,
-      max_tokens: 16000,
+      max_tokens: maxTokens,
       // On a safety decline, let the API re-run the request on the recommended fallback model.
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
@@ -105,13 +115,22 @@ export async function runAgent<S extends z.ZodType>(options: AgentOptions<S>): P
           type: 'web_fetch_20260209',
           name: 'web_fetch',
           max_uses: options.webFetchMaxUses ?? 8,
-          max_content_tokens: 20000,
+          max_content_tokens: options.webFetchMaxContentTokens ?? 20000,
         },
-        { name: toolName, description: options.toolDescription, input_schema: inputSchema },
+        {
+          name: toolName,
+          description: options.toolDescription,
+          input_schema: inputSchema,
+          // Streamed submissions arrive incrementally; the schema check below catches truncated input.
+          ...(streamed ? { eager_input_streaming: true } : {}),
+        },
       ],
       tool_choice: { type: 'auto' },
       messages,
-    });
+    };
+    const response = streamed
+      ? await client.beta.messages.stream(params).finalMessage()
+      : await client.beta.messages.create(params);
 
     usage.inputTokens += response.usage.input_tokens;
     usage.outputTokens += response.usage.output_tokens;
