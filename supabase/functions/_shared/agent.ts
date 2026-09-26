@@ -1,7 +1,7 @@
 /**
- * Generic research agent: Claude with server-side web search and web fetch,
- * finishing with a call to a "submit" tool whose input is validated against a
- * zod schema. Runtime-agnostic (Deno in production, Node in tests): the
+ * Generic research agent: Claude with server-side web search and web fetch
+ * (optional), finishing with a call to a "submit" tool whose input is validated
+ * against a zod schema. Runtime-agnostic (Deno in production, Node in tests): the
  * Anthropic client is passed in.
  */
 import type Anthropic from '@anthropic-ai/sdk';
@@ -11,6 +11,7 @@ import { normalizeUrl } from './sources.ts';
 
 type BetaMessage = Anthropic.Beta.Messages.BetaMessage;
 type BetaMessageParam = Anthropic.Beta.Messages.BetaMessageParam;
+type BetaContentBlockParam = Anthropic.Beta.Messages.BetaContentBlockParam;
 type BetaContentBlock = Anthropic.Beta.Messages.BetaContentBlock;
 type BetaToolUseBlock = Anthropic.Beta.Messages.BetaToolUseBlock;
 export type Effort = 'low' | 'medium' | 'high' | 'xhigh' | 'max';
@@ -36,12 +37,15 @@ export type AgentUsage = { inputTokens: number; outputTokens: number; cacheReadT
 export type AgentOptions<S extends z.ZodType> = {
   client: Anthropic;
   system: string;
-  prompt: string;
+  /** Text, or content blocks (e.g. a PDF document followed by the instructions). */
+  prompt: string | BetaContentBlockParam[];
   schema: S;
   toolName: string;
   toolDescription: string;
   model?: string;
   effort?: Effort;
+  /** Give the agent web search and web fetch (default true). */
+  web?: boolean;
   webSearchMaxUses?: number;
   webFetchMaxUses?: number;
 };
@@ -87,6 +91,20 @@ export async function runAgent<S extends z.ZodType>(options: AgentOptions<S>): P
   const usage: AgentUsage = { inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, webSearches: 0 };
   const inputSchema = toolInputSchema(schema);
   const messages: BetaMessageParam[] = [{ role: 'user', content: options.prompt }];
+  const submitTool = { name: toolName, description: options.toolDescription, input_schema: inputSchema };
+  const tools =
+    options.web === false
+      ? [submitTool]
+      : [
+          { type: 'web_search_20260209' as const, name: 'web_search' as const, max_uses: options.webSearchMaxUses ?? 10 },
+          {
+            type: 'web_fetch_20260209' as const,
+            name: 'web_fetch' as const,
+            max_uses: options.webFetchMaxUses ?? 8,
+            max_content_tokens: 20000,
+          },
+          submitTool,
+        ];
 
   for (let turn = 0; turn < MAX_TURNS; turn++) {
     const response = await client.beta.messages.create({
@@ -99,16 +117,7 @@ export async function runAgent<S extends z.ZodType>(options: AgentOptions<S>): P
       output_config: { effort: options.effort ?? 'high' },
       cache_control: { type: 'ephemeral' },
       system: options.system,
-      tools: [
-        { type: 'web_search_20260209', name: 'web_search', max_uses: options.webSearchMaxUses ?? 10 },
-        {
-          type: 'web_fetch_20260209',
-          name: 'web_fetch',
-          max_uses: options.webFetchMaxUses ?? 8,
-          max_content_tokens: 20000,
-        },
-        { name: toolName, description: options.toolDescription, input_schema: inputSchema },
-      ],
+      tools,
       tool_choice: { type: 'auto' },
       messages,
     });

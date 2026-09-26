@@ -31,7 +31,11 @@ export function authorPath(author: Author): string {
 
 export function AuthorLine({ author, createdAt }: { author: Author; createdAt: string }) {
   return (
-    <View style={styles.authorRow}>
+    <Pressable
+      onPress={() => router.push({ pathname: '/user/[id]', params: { id: author.id } })}
+      accessibilityRole="button"
+      accessibilityLabel={author.displayName}
+      style={styles.authorRow}>
       <Avatar name={author.displayName} size={42} />
       <View style={styles.authorText}>
         <View style={styles.nameRow}>
@@ -54,7 +58,7 @@ export function AuthorLine({ author, createdAt }: { author: Author; createdAt: s
           {authorPath(author)}
         </Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

@@ -42,3 +42,9 @@ export function hostname(url: string): string {
 export function isOlderThan(iso: string, days: number): boolean {
   return Date.now() - Date.parse(iso) > days * 24 * 3_600_000;
 }
+
+/** "240 KB", "1.4 MB". */
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}

@@ -12,3 +12,16 @@ import_map = "./functions/university-insights/deno.json"
 [functions.delete-account]
 verify_jwt = true
 import_map = "./functions/delete-account/deno.json"
+
+[functions.cv-review]
+verify_jwt = true
+import_map = "./functions/cv-review/deno.json"
+
+[functions.opportunities]
+verify_jwt = true
+import_map = "./functions/opportunities/deno.json"
+
+# Called by RevenueCat (not by the app): authenticated with REVENUECAT_WEBHOOK_AUTH instead of a user JWT.
+[functions.revenuecat-webhook]
+verify_jwt = false
+import_map = "./functions/revenuecat-webhook/deno.json"

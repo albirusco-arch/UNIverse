@@ -54,8 +54,10 @@ function openSource(url: string) {
   if (url) WebBrowser.openBrowserAsync(url).catch(() => undefined);
 }
 
-function SourceChips({ ids, sources }: { ids: number[]; sources: Source[] }) {
-  const cited = ids.map((id) => sources.find((s) => s.id === id)).filter((s): s is Source => Boolean(s));
+function SourceChips({ ids, sources }: { ids: number[]; sources: Pick<Source, 'id' | 'url' | 'title'>[] }) {
+  const cited = ids
+    .map((id) => sources.find((s) => s.id === id))
+    .filter((s): s is Pick<Source, 'id' | 'url' | 'title'> => Boolean(s));
   if (cited.length === 0) return null;
   return (
     <View style={styles.sourceChips}>
@@ -400,8 +402,10 @@ export function ResearchReportView({
   );
 }
 
-/** Numbered list of every source, with official / not-opened badges. Shared with university insights. */
-export function SourceList({ sources }: { sources: Source[] }) {
+type SourceLike = Pick<Source, 'id' | 'url' | 'title' | 'retrieved'> & { kind: string; academicYear?: string };
+
+/** Numbered list of every source, with official / not-opened badges. Shared with insights and career results. */
+export function SourceList({ sources }: { sources: SourceLike[] }) {
   return (
     <View>
       <SectionHeader title={t('report.sources')} />

@@ -7,15 +7,15 @@ import type { Research, ResearchRequest } from '../types';
 
 import {
   currentUserId,
-  functionErrorStatus,
   isDemoMode,
   notifyChange,
-  RateLimitError,
   requireClient,
   requireUserId,
   STALE_JOB_MS,
+  throwFunctionError,
 } from './core';
 import { demo } from './demo-store';
+import { demoSpend } from './wallet';
 
 type ResearchRow = {
   id: string;
@@ -45,6 +45,11 @@ const COLUMNS = 'id,kind,status,request,report,error,created_at';
 
 export async function requestResearch(request: ResearchRequest): Promise<string> {
   if (isDemoMode) {
+    // Like the server: a few free researches a day, then tokens.
+    const today = new Date().toDateString();
+    const usedToday = demo.research.filter((r) => new Date(r.createdAt).toDateString() === today).length;
+    const free = demo.prices.find((p) => p.feature === 'research')?.freePerDay ?? 0;
+    if (usedToday >= free) demoSpend('research');
     const id = `demo-${Date.now()}`;
     demo.research.unshift({ ...createDemoResearch(request, id), status: 'running', report: null });
     // Simulate the research delay so the progress UI can be seen.
@@ -57,10 +62,7 @@ export async function requestResearch(request: ResearchRequest): Promise<string>
   }
   await requireUserId();
   const { data, error } = await requireClient().functions.invoke<{ id: string }>('research', { body: { request } });
-  if (error) {
-    if (functionErrorStatus(error) === 429) throw new RateLimitError('rate limited');
-    throw error;
-  }
+  if (error) await throwFunctionError(error);
   if (!data?.id) throw new Error('Missing research id');
   notifyChange();
   return data.id;

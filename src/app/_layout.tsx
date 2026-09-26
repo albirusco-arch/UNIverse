@@ -43,6 +43,7 @@ function RootNavigator() {
       <Stack.Screen name="club/new" options={modal} />
       <Stack.Screen name="group/new" options={modal} />
       <Stack.Screen name="group/join" options={modal} />
+      <Stack.Screen name="career-links" options={modal} />
     </Stack>
   );
 }

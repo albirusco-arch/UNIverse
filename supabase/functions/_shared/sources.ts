@@ -45,9 +45,15 @@ export function normalizeUrl(raw: string): string | null {
   }
 }
 
-/** Marks each cited source as retrieved (or not) and returns a verifier for items. */
-export function createVerifier(sources: SubmittedSource[], retrievedUrls: Set<string>) {
-  const verifiedSources: VerifiedSource[] = sources.map((source) => {
+/**
+ * Marks each cited source as retrieved (or not) and returns a verifier for items.
+ * A source of kind "other" never verifies an item on its own.
+ */
+export function createVerifier<S extends { id: number; url: string; kind: string } = SubmittedSource>(
+  sources: S[],
+  retrievedUrls: Set<string>,
+) {
+  const verifiedSources: (S & { retrieved: boolean })[] = sources.map((source) => {
     const normalized = normalizeUrl(source.url);
     return { ...source, retrieved: normalized !== null && retrievedUrls.has(normalized) };
   });

@@ -65,7 +65,7 @@ export type Profile = {
   destinationId: string | null;
   term: string | null;
   verified: boolean;
-};
+} & CareerLinks;
 
 export type Author = Pick<
   Profile,
@@ -346,3 +346,143 @@ export type Signal = {
   value: string;
   createdAt: string;
 };
+
+// ---------------------------------------------------------------------------
+// Tokens: bought as consumable in-app purchases, spent on paid AI features
+
+export type AiFeature = 'cv_review' | 'opportunity_match' | 'research';
+
+export type FeaturePrice = { feature: AiFeature; cost: number; freePerDay: number };
+
+export type TokenProduct = {
+  productId: string;
+  tokens: number;
+  /** Localised store price, e.g. "€4,99"; null until the store answers (or in demo mode). */
+  priceString: string | null;
+};
+
+export type LedgerReason = 'welcome' | 'purchase' | 'refund' | 'refund_reversed' | 'spend' | 'spend_refund' | 'grant';
+
+export type LedgerEntry = {
+  id: string;
+  delta: number;
+  reason: LedgerReason;
+  feature: AiFeature | null;
+  createdAt: string;
+};
+
+export type Wallet = { balance: number; entries: LedgerEntry[] };
+
+// ---------------------------------------------------------------------------
+// Career: CV review and opportunity matching. Shapes mirror
+// supabase/functions/cv-review/schema.ts and supabase/functions/opportunities/schema.ts.
+
+export const CAREER_TARGETS = ['internship', 'graduate_job', 'job', 'part_time', 'research', 'master', 'phd'] as const;
+export type CareerTarget = (typeof CAREER_TARGETS)[number];
+
+export type CareerLinks = {
+  linkedinUrl: string;
+  handshakeUrl: string;
+  jobteaserUrl: string;
+  openToOpportunities: boolean;
+};
+
+export type PublicProfile = Author & CareerLinks & { level: Level | null };
+
+export type CvFile = { fileName: string; sizeBytes: number; uploadedAt: string };
+
+export type CvReviewRequest = {
+  targetRole: string;
+  targetType: CareerTarget;
+  industry: string;
+  /** ISO 3166-1 alpha-2, or ''. */
+  country: string;
+  jobDescription: string;
+  notes: string;
+};
+
+export type CvPriority = 'high' | 'medium' | 'low';
+
+export type CvReport = {
+  overallScore: number;
+  summary: string;
+  headline: string;
+  strengths: string[];
+  improvements: { priority: CvPriority; section: string; issue: string; suggestion: string; example: string }[];
+  atsChecks: { check: string; status: 'pass' | 'warning' | 'fail'; detail: string }[];
+  keywords: { present: string[]; missing: string[] };
+  sectionScores: { section: string; score: number; comment: string }[];
+  nextSteps: string[];
+  checkedAt: string;
+};
+
+export type CvReview = {
+  id: string;
+  status: JobStatus;
+  request: CvReviewRequest;
+  report: CvReport | null;
+  error: string | null;
+  createdAt: string;
+  isDemo?: boolean;
+};
+
+export type OpportunityPlatform = 'linkedin' | 'handshake' | 'jobteaser' | 'company' | 'university' | 'job_board' | 'other';
+
+export type OpportunityRequest = {
+  types: CareerTarget[];
+  keywords: string;
+  /** Up to 5 ISO 3166-1 alpha-2 codes; empty = anywhere. */
+  countries: string[];
+  remote: boolean;
+  startDate: string;
+  languages: string;
+  useCv: boolean;
+  notes: string;
+};
+
+export type Opportunity = Verifiable & {
+  title: string;
+  organization: string;
+  type: CareerTarget;
+  location: string;
+  remote: boolean;
+  deadline: string;
+  startDate: string;
+  url: string;
+  platform: OpportunityPlatform;
+  fit: number;
+  reasons: string[];
+  requirements: string[];
+  gaps: string[];
+};
+
+export type TargetOrganization = Verifiable & { name: string; why: string; careersUrl: string };
+
+export type OpportunitySource = {
+  id: number;
+  url: string;
+  title: string;
+  kind: 'employer' | 'job_board' | 'university' | 'government' | 'other';
+  retrieved: boolean;
+};
+
+export type OpportunityReport = {
+  summary: string;
+  opportunities: Opportunity[];
+  organizations: TargetOrganization[];
+  tips: string[];
+  sources: OpportunitySource[];
+  checkedAt: string;
+};
+
+export type OpportunitySearch = {
+  id: string;
+  status: JobStatus;
+  request: OpportunityRequest;
+  report: OpportunityReport | null;
+  error: string | null;
+  createdAt: string;
+  isDemo?: boolean;
+};
+
+export type SavedOpportunity = { url: string; opportunity: Opportunity; createdAt: string };

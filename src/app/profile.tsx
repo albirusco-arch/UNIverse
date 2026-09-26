@@ -1,14 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ArrowRight, BadgeCheck, Bookmark, LogOut, Pencil, Settings, Sparkles } from 'lucide-react-native';
+import { ArrowRight, BadgeCheck, Bookmark, Briefcase, Coins, FileText, Link2, LogOut, Pencil, Settings, Sparkles } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { UniversityCard } from '@/components/university-card';
 import { Avatar, Badge, Card, Divider, EmptyState, Header, ListRow, Screen, SectionHeader, Text } from '@/components/ui';
 import {
   countryName,
+  getCv,
   getUniversity,
   getUniversityStats,
+  getWallet,
   listMyResearch,
   listPosts,
   listSavedUniversityIds,
@@ -40,6 +42,9 @@ export default function ProfileScreen() {
   const { data: myPosts } = useQuery(() => listPosts({ authorId: profile.id }), [profile.id]);
   const { data: stats } = useQuery(getUniversityStats, []);
   const { data: scores } = useQuery(listScores, []);
+  const { data: wallet } = useQuery(getWallet, []);
+  const { data: cv } = useQuery(getCv, []);
+  const linkCount = [profile.linkedinUrl, profile.handshakeUrl, profile.jobteaserUrl].filter(Boolean).length;
 
   const saved = (savedIds ?? []).map((id) => getUniversity(id)).filter((u) => u !== undefined);
   const name = profile.displayName || (email?.split('@')[0] ?? '');
@@ -67,7 +72,10 @@ export default function ProfileScreen() {
                 {email}
               </Text>
             ) : null}
-            {profile.verified ? <Badge icon={BadgeCheck} tone="primary" label={t('profile.verified')} /> : null}
+            <View style={styles.badges}>
+              {profile.verified ? <Badge icon={BadgeCheck} tone="primary" label={t('profile.verified')} /> : null}
+              {profile.openToOpportunities ? <Badge icon={Briefcase} tone="success" label={t('user.openToWork')} /> : null}
+            </View>
           </View>
         </View>
         <View style={styles.stats}>
@@ -144,6 +152,24 @@ export default function ProfileScreen() {
       </View>
 
       <Card style={[styles.section, styles.menu]}>
+        <ListRow
+          icon={Coins}
+          label={t('profile.tokens')}
+          value={wallet ? t('wallet.tokens', { n: wallet.balance }) : undefined}
+          onPress={() => router.push('/wallet')}
+        />
+        <Divider />
+        <ListRow icon={FileText} label={t('profile.cv')} value={cv?.fileName ?? t('profile.noCv')} onPress={() => router.push('/cv')} />
+        <Divider />
+        <ListRow
+          icon={Link2}
+          label={t('profile.careerLinks')}
+          value={linkCount > 0 ? String(linkCount) : undefined}
+          onPress={() => router.push('/career-links')}
+        />
+      </Card>
+
+      <Card style={[styles.section, styles.menu]}>
         <ListRow icon={Settings} label={t('profile.settings')} onPress={() => router.push('/settings')} />
         <Divider />
         <ListRow icon={LogOut} label={t('profile.signOut')} onPress={logOut} destructive />
@@ -168,6 +194,11 @@ const styles = StyleSheet.create({
   heroText: {
     flex: 1,
     gap: 4,
+  },
+  badges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
   },
   stats: {
     flexDirection: 'row',

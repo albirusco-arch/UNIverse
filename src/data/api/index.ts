@@ -14,12 +14,15 @@ export {
 } from '../catalogue';
 export {
   AuthRequiredError,
+  InsufficientTokensError,
   isDemoMode,
+  NoCvError,
   notifyChange,
   RateLimitError,
   setDemoIdentity,
   subscribe,
 } from './core';
+export * from './career';
 export * from './community';
 export * from './feed';
 export * from './groups';
@@ -27,3 +30,4 @@ export * from './profile';
 export * from './research';
 export * from './signals';
 export * from './universities';
+export { buyTokens, getWallet, listFeaturePrices, listTokenProducts } from './wallet';

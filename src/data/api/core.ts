@@ -31,6 +31,12 @@ export class AuthRequiredError extends Error {
 
 export class RateLimitError extends Error {}
 
+/** A paid AI feature was requested without enough tokens. */
+export class InsufficientTokensError extends Error {}
+
+/** A CV-based feature was requested before uploading a CV. */
+export class NoCvError extends Error {}
+
 export function requireClient() {
   if (!supabase) throw new Error('Supabase is not configured');
   return supabase;
@@ -51,6 +57,19 @@ export async function requireUserId(): Promise<string> {
 /** Status code of a failed edge-function call, if any. */
 export function functionErrorStatus(error: unknown): number | undefined {
   return (error as { context?: { status?: number } }).context?.status;
+}
+
+/** Maps a failed edge-function call to the app's typed errors (or rethrows it). */
+export async function throwFunctionError(error: unknown): Promise<never> {
+  const status = functionErrorStatus(error);
+  if (status === 429) throw new RateLimitError('rate limited');
+  if (status === 402) throw new InsufficientTokensError('insufficient tokens');
+  if (status === 400) {
+    const response = (error as { context?: { json?: () => Promise<{ error?: string }> } }).context;
+    const body = await response?.json?.().catch(() => null);
+    if (body?.error === 'no_cv') throw new NoCvError('no cv');
+  }
+  throw error;
 }
 
 // ---------------------------------------------------------------------------

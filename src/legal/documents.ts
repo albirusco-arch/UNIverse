@@ -34,6 +34,10 @@ const docs: Record<LegalDocId, LegalDoc> = {
       },
       { heading: 'No spam', body: 'No advertising, affiliate links, paid essay services, mass invites or repeated posts.' },
       {
+        heading: 'Networking and recruiting',
+        body: 'Use the career links other students share only to connect about studies, internships and jobs. No unsolicited sales, recruitment fees or fake job offers; report anything suspicious.',
+      },
+      {
         heading: 'Moderation',
         body: 'Every post, comment, message, group and club can be reported. Reported content is reviewed within 24 hours; content that breaks these rules is removed and repeat offenders are banned. You can block any user at any time.',
       },
@@ -60,8 +64,16 @@ const docs: Record<LegalDocId, LegalDoc> = {
         body: 'The UNIVERSE score combines ESG and teaching indicators found in public sources with averaged ratings from verified students. It is an opinion-based indicator for orientation, not an official ranking or accreditation.',
       },
       {
+        heading: 'Career tools',
+        body: 'CV reviews and job, internship and programme matches are automated guidance. UNIVERSE is not an employer, recruiter or employment agency and does not guarantee interviews, offers or admission. Postings belong to the organisations that publish them (including on LinkedIn, Handshake and JobTeaser); always read the original posting before applying.',
+      },
+      {
+        heading: 'Tokens and payments',
+        body: 'Some AI features cost tokens. Tokens are bought as in-app purchases through the App Store or Google Play, which process the payment under their own terms; prices are shown before you pay. Tokens have no cash value, cannot be transferred and do not expire. If an AI job fails, its tokens are returned automatically. Refunds of purchases are handled by Apple or Google; tokens from a refunded purchase are removed. We may change what features cost; the price is always shown before you use a feature.',
+      },
+      {
         heading: 'Your content',
-        body: 'You keep ownership of what you post (posts, comments, messages, ratings, equivalences, club suggestions) and grant UNIVERSE a licence to display it in the app. You are responsible for its accuracy and lawfulness.',
+        body: 'You keep ownership of what you post (posts, comments, messages, ratings, equivalences, club suggestions) and the CV you upload, and grant UNIVERSE a licence to display your posts in the app. You are responsible for their accuracy and lawfulness.',
       },
       {
         heading: 'Acceptable use',
@@ -81,11 +93,23 @@ const docs: Record<LegalDocId, LegalDoc> = {
       { heading: 'Controller', body: '[COMPANY NAME], [ADDRESS], [SUPPORT EMAIL].' },
       {
         heading: 'Data we collect',
-        body: 'University email address (to sign in and verify student status) and the university linked to its domain; the profile you enter (name, home university, field, level, destination, exchange period); content you post (posts, comments, group messages, equivalences, club suggestions); university ratings; AI research requests and results; saved universities; group memberships; reports and blocks. We do not use advertising trackers.',
+        body: 'University email address (to sign in and verify student status) and the university linked to its domain; the profile you enter (name, home university, field, level, destination, exchange period, and the LinkedIn, Handshake and JobTeaser links you choose to add); content you post (posts, comments, group messages, equivalences, club suggestions); university ratings; the CV you upload; AI research, CV reviews and job searches and their results; saved universities and opportunities; token purchases and use; group memberships; reports and blocks. We do not use advertising trackers.',
       },
       {
         heading: 'Personalisation',
         body: 'To rank the “For you” feed we store what you search, the universities you view or save and the research you request. These signals are private to you, never shown to other students, and deleted with your account.',
+      },
+      {
+        heading: 'Your CV',
+        body: 'Your CV is stored in a private file that only you can access. It is sent to our AI provider only when you ask for a CV review, or for a job search that uses your CV. You can delete it at any time from the CV screen; it is also deleted with your account.',
+      },
+      {
+        heading: 'Career links',
+        body: 'LinkedIn, Handshake and JobTeaser links, and whether you are open to opportunities, are shown on your profile to other signed-in students. Leave them empty to keep them private.',
+      },
+      {
+        heading: 'Payments',
+        body: 'Purchases are processed by Apple or Google; we never see your card details. RevenueCat receives the purchase receipt and an anonymous account id to confirm the purchase to us.',
       },
       {
         heading: 'Ratings',
@@ -97,11 +121,11 @@ const docs: Record<LegalDocId, LegalDoc> = {
       },
       {
         heading: 'Processors',
-        body: 'Supabase (database, authentication and realtime chat, EU region recommended) and Anthropic (AI processing). Data is transferred outside the EU only under appropriate safeguards.',
+        body: 'Supabase (database, file storage, authentication and realtime chat, EU region recommended), Anthropic (AI processing) and RevenueCat (purchase validation). Data is transferred outside the EU only under appropriate safeguards.',
       },
       {
         heading: 'Retention and deletion',
-        body: 'You can delete your account in Settings at any time: your profile, posts, comments, messages, ratings, research and personalisation signals are deleted permanently.',
+        body: 'You can delete your account in Settings at any time: your profile, posts, comments, messages, ratings, research, CV, career searches, token history and personalisation signals are deleted permanently. Purchase records kept by Apple, Google and RevenueCat follow their own retention rules.',
       },
       {
         heading: 'Your rights',

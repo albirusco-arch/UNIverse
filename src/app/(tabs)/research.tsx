@@ -1,7 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import {
   ArrowLeftRight,
+  Briefcase,
   ChevronRight,
+  FileSearch,
   Clock,
   GraduationCap,
   Plane,
@@ -15,9 +17,19 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { CountryPicker } from '@/components/country-picker';
+import { TokenBadge, TokenCost, useNotEnoughTokens } from '@/components/tokens';
 import { UniversityNameInput, UniversityPicker } from '@/components/university-picker';
 import { Badge, Button, Card, Chip, ChipRow, DemoBadge, EmptyState, IconTile, Input, Screen, SectionHeader, Text } from '@/components/ui';
-import { countryName, getUniversity, listMyResearch, RateLimitError, requestResearch, trackSignal } from '@/data/api';
+import {
+  countryName,
+  getUniversity,
+  InsufficientTokensError,
+  listFeaturePrices,
+  listMyResearch,
+  RateLimitError,
+  requestResearch,
+  trackSignal,
+} from '@/data/api';
 import {
   LEVELS,
   RESEARCH_KINDS,
@@ -118,6 +130,12 @@ export default function ResearchTab() {
   }
 
   const { data: history } = useQuery(listMyResearch, []);
+  const { data: prices } = useQuery(listFeaturePrices, []);
+  const notEnoughTokens = useNotEnoughTokens();
+  const researchPrice = prices?.find((p) => p.feature === 'research');
+  const today = new Date().toDateString();
+  const usedToday = (history ?? []).filter((r) => new Date(r.createdAt).toDateString() === today).length;
+  const freeLeft = Math.max(0, (researchPrice?.freePerDay ?? 0) - usedToday);
 
   const destination = getUniversity(destinationId);
   const country = destination?.countryCode ?? destinationCountry;
@@ -175,7 +193,8 @@ export default function ResearchTab() {
       if (request.program) trackSignal('course', request.program);
       router.push({ pathname: '/research/[id]', params: { id } });
     } catch (err) {
-      setError(err instanceof RateLimitError ? t('common.limit') : t('common.error'));
+      if (err instanceof InsufficientTokensError) notEnoughTokens('research');
+      else setError(err instanceof RateLimitError ? t('common.limit') : t('common.error'));
     } finally {
       setSubmitting(false);
     }
@@ -242,11 +261,42 @@ export default function ResearchTab() {
         <Text variant="title1" accessibilityRole="header">
           {t('research.title')}
         </Text>
-        <DemoBadge />
+        <View style={styles.titleBadges}>
+          <DemoBadge />
+          <TokenBadge />
+        </View>
       </View>
       <Text variant="callout" color="textSecondary" style={styles.subtitle}>
         {t('research.subtitle')}
       </Text>
+
+      <SectionHeader title={t('career.title')} />
+      <View style={styles.career}>
+        {(
+          [
+            { href: '/cv', icon: FileSearch, colors: gradients.accent, title: t('career.cvTitle'), body: t('career.cvBody'), feature: 'cv_review' },
+            { href: '/opportunities', icon: Briefcase, colors: gradients.indigo, title: t('career.matchTitle'), body: t('career.matchBody'), feature: 'opportunity_match' },
+          ] as const
+        ).map((item) => (
+          <Pressable
+            key={item.href}
+            onPress={() => router.push(item.href)}
+            accessibilityRole="button"
+            accessibilityLabel={item.title}
+            style={({ pressed }) => [styles.kind, pressed && { opacity: 0.85 }]}>
+            <IconTile icon={item.icon} colors={item.colors} size={36} />
+            <Text variant="bodyStrong" numberOfLines={2}>
+              {item.title}
+            </Text>
+            <Text variant="caption" color="textMuted" numberOfLines={2}>
+              {item.body}
+            </Text>
+            <TokenCost cost={prices?.find((p) => p.feature === item.feature)?.cost ?? 0} />
+          </Pressable>
+        ))}
+      </View>
+
+      <SectionHeader title={t('research.studyTitle')} />
 
       <View style={styles.kinds} accessibilityRole="radiogroup">
         {RESEARCH_KINDS.map((k) => {
@@ -417,6 +467,15 @@ export default function ResearchTab() {
           loading={submitting}
           disabled={!valid}
         />
+        <View style={styles.price}>
+          {freeLeft > 0 ? (
+            <Text variant="caption" color="success">
+              {t('research.freeLeft', { n: freeLeft })}
+            </Text>
+          ) : (
+            <TokenCost cost={researchPrice?.cost ?? 0} />
+          )}
+        </View>
         <View style={styles.duration}>
           <Clock size={14} color={colors.textMuted} />
           <Text variant="caption" color="textMuted" style={styles.durationText}>
@@ -446,6 +505,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  titleBadges: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  career: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  price: {
+    alignItems: 'center',
   },
   subtitle: {
     marginTop: spacing.xs,

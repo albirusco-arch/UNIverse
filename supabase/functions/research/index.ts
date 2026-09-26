@@ -4,15 +4,19 @@
  * Creates a research_requests row and researches it in the background with
  * Claude; the app polls the row until its status is "done" or "error".
  * Kinds: exchange course matching, entry requirements, scholarships, visas.
+ * The first few researches each day are free (ai_features.free_per_day); the
+ * next ones cost tokens, refunded if the research fails. Reused results are free.
  */
 import Anthropic from '@anthropic-ai/sdk';
 
 import { AgentError } from '../_shared/agent.ts';
 import { adminClient, corsHeaders, getCaller, json } from '../_shared/http.ts';
+import { chargeTokens, featurePrice, refundJob } from '../_shared/tokens.ts';
 import { research } from './research.ts';
 import { RequestSchema, type ResearchRequest } from './schema.ts';
 
-const DAILY_LIMIT = Number(Deno.env.get('RESEARCH_DAILY_LIMIT') ?? '5');
+/** Hard cap per student per day, paid or not, to stop abuse. */
+const DAILY_LIMIT = Number(Deno.env.get('RESEARCH_DAILY_LIMIT') ?? '20');
 const CACHE_DAYS = 14;
 const MODEL = Deno.env.get('CLAUDE_MODEL') ?? undefined;
 
@@ -69,6 +73,8 @@ async function runResearch(
         completed_at: new Date().toISOString(),
       })
       .eq('id', id);
+    // No-op when the research was free.
+    await refundJob(admin, id);
   }
 }
 
@@ -144,20 +150,30 @@ Deno.serve(async (req) => {
     return json({ id: data.id, cached: true }, 200);
   }
 
-  const { data: row, error } = await admin
+  const id = crypto.randomUUID();
+  let balance: number | undefined;
+  const price = await featurePrice(admin, 'research');
+  if ((count ?? 0) >= price.freePerDay && price.cost > 0) {
+    const charge = await chargeTokens(admin, user.id, 'research', id);
+    if (!charge.ok) return json({ error: charge.error }, charge.error === 'insufficient_tokens' ? 402 : 500);
+    balance = charge.balance;
+  }
+
+  const { error } = await admin
     .from('research_requests')
-    .insert({ user_id: user.id, kind: request.kind, request, request_hash: hash, status: 'running' })
-    .select('id')
-    .single();
-  if (error) return json({ error: 'database_error' }, 500);
+    .insert({ id, user_id: user.id, kind: request.kind, request, request_hash: hash, status: 'running' });
+  if (error) {
+    await refundJob(admin, id);
+    return json({ error: 'database_error' }, 500);
+  }
 
   // Keep researching after the response is sent (bounded by the function's wall-clock limit).
   EdgeRuntime.waitUntil(
-    runResearch(row.id, request, {
+    runResearch(id, request, {
       website,
       destinationCountryName: countryName(destinationCountry),
       citizenshipName: countryName(request.citizenship),
     }),
   );
-  return json({ id: row.id }, 202);
+  return json({ id, balance }, 202);
 });

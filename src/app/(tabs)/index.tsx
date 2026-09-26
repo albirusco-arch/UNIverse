@@ -2,6 +2,8 @@ import { router } from 'expo-router';
 import {
   ArrowLeftRight,
   ArrowRight,
+  Briefcase,
+  FileSearch,
   GraduationCap,
   Plane,
   ShieldCheck,
@@ -17,6 +19,7 @@ import { GradientText } from '@/components/gradient-text';
 import { GroupRow } from '@/components/group-row';
 import { PostCard } from '@/components/post-card';
 import { ScoreRing } from '@/components/score';
+import { TokenBadge } from '@/components/tokens';
 import { Avatar, Button, Card, DemoBadge, IconTile, Screen, SectionHeader, Text } from '@/components/ui';
 import { getUniversity, listForYou, listMyGroups, listScores } from '@/data/api';
 import type { ResearchKind, University, UniversityScore } from '@/data/types';
@@ -143,6 +146,7 @@ export default function HomeScreen() {
         <Wordmark size={16} />
         <View style={styles.topRight}>
           <DemoBadge />
+          <TokenBadge />
           <Pressable onPress={() => router.push('/profile')} accessibilityRole="button" accessibilityLabel={t('profile.title')}>
             <Avatar name={profile.displayName || '?'} size={40} />
           </Pressable>
@@ -177,6 +181,33 @@ export default function HomeScreen() {
               </Text>
               <Text variant="caption" color="textMuted" numberOfLines={2}>
                 {t(`research.kindBodies.${item.kind}`)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <SectionHeader title={t('home.careerTitle')} />
+        <View style={styles.aiGrid}>
+          {(
+            [
+              { href: '/cv', icon: FileSearch, colors: gradients.accent, title: t('career.cvTitle'), body: t('career.cvBody') },
+              { href: '/opportunities', icon: Briefcase, colors: gradients.indigo, title: t('career.matchTitle'), body: t('career.matchBody') },
+            ] as const
+          ).map((item) => (
+            <Pressable
+              key={item.href}
+              onPress={() => router.push(item.href)}
+              accessibilityRole="button"
+              accessibilityLabel={item.title}
+              style={({ pressed }) => [styles.aiItem, pressed && { opacity: 0.85 }]}>
+              <IconTile icon={item.icon} colors={item.colors} size={36} />
+              <Text variant="bodyStrong" numberOfLines={1}>
+                {item.title}
+              </Text>
+              <Text variant="caption" color="textMuted" numberOfLines={2}>
+                {item.body}
               </Text>
             </Pressable>
           ))}

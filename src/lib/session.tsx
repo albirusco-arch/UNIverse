@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { fetchProfile, notifyChange, saveProfile, setDemoIdentity } from '@/data/api';
 import type { Profile } from '@/data/types';
+import { forgetPurchaser, identifyPurchaser } from '@/lib/purchases';
 import { universityForEmail } from '@/lib/student-email';
 import { isDemoMode, supabase } from '@/lib/supabase';
 
@@ -20,6 +21,10 @@ const emptyProfile: Profile = {
   destinationId: null,
   term: null,
   verified: false,
+  linkedinUrl: '',
+  handshakeUrl: '',
+  jobteaserUrl: '',
+  openToOpportunities: false,
 };
 
 type SessionState = {
@@ -98,6 +103,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const userId = session?.user.id;
   useEffect(() => {
     if (!userId) return;
+    // Store purchases are credited to this user id by the RevenueCat webhook.
+    identifyPurchaser(userId).catch(() => undefined);
     let cancelled = false;
     fetchProfile(userId)
       .then(async (server) => {
@@ -161,6 +168,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    await forgetPurchaser();
     if (supabase) {
       await supabase.auth.signOut();
     } else {
