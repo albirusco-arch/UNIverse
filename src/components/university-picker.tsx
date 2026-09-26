@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Input, Text } from '@/components/ui';
 import { getUniversity, searchUniversities, type Scope } from '@/data/api';
 import type { University } from '@/data/types';
+import { t } from '@/i18n';
 import { flagEmoji } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -69,7 +70,7 @@ export function UniversityPicker({ label, value, onChange, placeholder, excludeI
             onPress={() => onChange(null)}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${selected.name}`}>
+            accessibilityLabel={t('common.remove', { name: selected.name })}>
             <X size={18} color={colors.textMuted} />
           </Pressable>
         </View>

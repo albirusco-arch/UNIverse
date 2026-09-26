@@ -27,7 +27,7 @@ import {
   type ResearchRequest,
   type StudyType,
 } from '@/data/types';
-import { t } from '@/i18n';
+import { getLanguage, t } from '@/i18n';
 import { formatDate } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import { useQuery } from '@/lib/use-query';
@@ -164,6 +164,7 @@ export default function ResearchTab() {
       durationMonths: Number.isFinite(months) && months > 0 ? Math.min(months, 72) : null,
       courses: kind === 'exchange' ? filledCourses : [],
       notes: notes.trim(),
+      language: getLanguage(),
     };
 
     setError(null);

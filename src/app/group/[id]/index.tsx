@@ -26,7 +26,7 @@ import {
   subscribeToGroup,
 } from '@/data/api';
 import type { Group, GroupMessage } from '@/data/types';
-import { t } from '@/i18n';
+import { locale, t } from '@/i18n';
 import { useModeration } from '@/lib/use-moderation';
 import { useQuery } from '@/lib/use-query';
 import { colors, gutter, radius, spacing } from '@/theme/tokens';
@@ -40,7 +40,7 @@ function nameColor(id: string): string {
 }
 
 function clock(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return new Date(iso).toLocaleTimeString(locale(), { hour: '2-digit', minute: '2-digit' });
 }
 
 function dayKey(iso: string): string {
@@ -55,7 +55,7 @@ function dayLabel(iso: string): string {
   yesterday.setDate(today.getDate() - 1);
   if (date.toDateString() === today.toDateString()) return t('groups.today');
   if (date.toDateString() === yesterday.toDateString()) return t('groups.yesterday');
-  return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  return date.toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function Bubble({

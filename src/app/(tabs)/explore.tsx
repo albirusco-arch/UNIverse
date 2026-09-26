@@ -18,7 +18,7 @@ import {
   type Scope,
 } from '@/data/api';
 import { REGIONS, type Region, type University } from '@/data/types';
-import { t } from '@/i18n';
+import { locale, t } from '@/i18n';
 import { SUPPORT_EMAIL } from '@/lib/config';
 import { useQuery } from '@/lib/use-query';
 import { spacing } from '@/theme/tokens';
@@ -94,7 +94,7 @@ export default function ExploreScreen() {
         <DemoBadge />
       </View>
       <Text variant="callout" color="textMuted" style={styles.subtitle}>
-        {t('explore.subtitle', { n: universities.length.toLocaleString('en-GB'), countries: countryList.length })}
+        {t('explore.subtitle', { n: universities.length.toLocaleString(locale()), countries: countryList.length })}
       </Text>
 
       <Input

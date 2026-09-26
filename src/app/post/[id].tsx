@@ -73,7 +73,7 @@ export default function PostScreen() {
                       <Pressable
                         hitSlop={12}
                         accessibilityRole="button"
-                        accessibilityLabel="More actions"
+                        accessibilityLabel={t('common.moreActions')}
                         onPress={() => commentMenu(comment)}>
                         <MoreHorizontal size={18} color={colors.textMuted} />
                       </Pressable>

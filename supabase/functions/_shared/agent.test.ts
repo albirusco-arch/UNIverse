@@ -28,6 +28,7 @@ const request: ResearchRequest = {
   durationMonths: 5,
   courses: [{ name: 'Biochemistry II', ects: 6 }],
   notes: '',
+  language: 'en',
 };
 
 const report: SubmittedReport = {

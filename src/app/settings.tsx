@@ -1,13 +1,14 @@
 import { router } from 'expo-router';
-import { FileText, LifeBuoy, Mail, Route, Scale, ShieldCheck, Trash2, Users } from 'lucide-react-native';
+import { FileText, Languages, LifeBuoy, Mail, Route, Scale, ShieldCheck, Trash2, Users } from 'lucide-react-native';
 import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 
 import { useFeedback } from '@/components/feedback';
 import { Card, Divider, Header, ListRow, Screen, Text } from '@/components/ui';
 import { deleteAccount } from '@/data/api';
-import { t } from '@/i18n';
+import { LANGUAGES, t, type LanguagePreference } from '@/i18n';
 import { APP_VERSION, SUPPORT_EMAIL } from '@/lib/config';
+import { useLanguage } from '@/lib/language';
 import { useSession } from '@/lib/session';
 import { colors, spacing } from '@/theme/tokens';
 
@@ -26,6 +27,19 @@ export default function SettingsScreen() {
   const { signedIn, email, signOut } = useSession();
   const { showSheet, toast } = useFeedback();
   const [deleting, setDeleting] = useState(false);
+  const { language, preference, setPreference } = useLanguage();
+
+  const languageLabel = (value: LanguagePreference) =>
+    value === 'system' ? t('settings.languageSystem') : t(`languages.${value}`);
+
+  const chooseLanguage = () =>
+    showSheet({
+      title: t('settings.language'),
+      options: (['system', ...LANGUAGES] as const).map((value) => ({
+        label: value === preference ? `${languageLabel(value)} ✓` : languageLabel(value),
+        onPress: () => setPreference(value),
+      })),
+    });
 
   const confirmDelete = () =>
     showSheet({
@@ -62,6 +76,10 @@ export default function SettingsScreen() {
         </Group>
       )}
 
+      <Group title={t('settings.preferences')}>
+        <ListRow icon={Languages} label={t('settings.language')} value={t(`languages.${language}`)} onPress={chooseLanguage} />
+      </Group>
+
       <Group title={t('settings.legal')}>
         <ListRow icon={Users} label={t('settings.guidelines')} onPress={() => router.push('/legal/guidelines')} />
         <Divider />
@@ -90,7 +108,7 @@ export default function SettingsScreen() {
       <View style={styles.version}>
         <FileText size={14} color={colors.textMuted} />
         <Text variant="caption" color="textMuted">
-          Universe · {t('settings.version', { v: APP_VERSION })}
+          UNIverse · {t('settings.version', { v: APP_VERSION })}
         </Text>
       </View>
     </Screen>

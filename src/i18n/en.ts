@@ -30,6 +30,14 @@ const en = {
     members: '{n} members',
     members_one: '{n} member',
     limit: 'Daily limit reached. Try again tomorrow.',
+    moreActions: 'More actions',
+    like: 'Like, {n}',
+    remove: 'Remove {name}',
+    unread: '{n} unread',
+  },
+  languages: {
+    en: 'English',
+    it: 'Italiano',
   },
   tabs: {
     home: 'Home',
@@ -518,6 +526,9 @@ const en = {
     deleteBody: 'Your profile, posts, comments, messages, ratings and research will be permanently deleted. This cannot be undone.',
     deleted: 'Your account has been deleted.',
     version: 'Version {v}',
+    preferences: 'Preferences',
+    language: 'Language',
+    languageSystem: 'Same as device',
   },
   auth: {
     title: 'Sign in with your university email',

@@ -138,6 +138,8 @@ export type ResearchRequest = {
   durationMonths: number | null;
   courses: { name: string; ects: number | null }[];
   notes: string;
+  /** Language the report is written in (English when missing). */
+  language?: 'en' | 'it';
 };
 
 export type RequirementCategory =

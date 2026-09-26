@@ -36,6 +36,7 @@ async function requestHash(request: ResearchRequest): Promise<string> {
     duration: request.durationMonths,
     courses: request.courses.map((c) => [lower(c.name), c.ects]),
     notes: lower(request.notes),
+    language: request.language,
   });
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');

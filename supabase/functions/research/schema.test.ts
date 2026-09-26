@@ -49,5 +49,18 @@ test('prompts carry the task for the requested kind', () => {
   assert.match(prompt, /Citizenship: Italy/);
   assert.match(prompt, /Destination country: United States/);
   assert.match(prompt, /Duration: 24 months/);
+  assert.match(prompt, /Report language: English\./);
   assert.doesNotMatch(prompt, /Courses the student needs to cover/);
+});
+
+test('reports follow the app language', () => {
+  const parsed = RequestSchema.parse({ ...base, kind: 'scholarships', destinationCountry: 'DE', language: 'it' });
+  const prompt = buildUserPrompt(parsed, {
+    destinationWebsite: null,
+    destinationCountryName: 'Germany',
+    citizenshipName: '',
+    now: new Date('2026-09-26T00:00:00Z'),
+  });
+  assert.match(prompt, /Report language: Italian\./);
+  assert.equal(RequestSchema.safeParse({ ...base, kind: 'scholarships', destinationCountry: 'DE', language: 'fr' }).success, false);
 });

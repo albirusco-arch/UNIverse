@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Input, Text } from '@/components/ui';
 import { countryList, countryName, normalize } from '@/data/api';
+import { t } from '@/i18n';
 import { flagEmoji } from '@/lib/format';
 import { colors, radius, spacing } from '@/theme/tokens';
 
@@ -43,7 +44,7 @@ export function CountryPicker({ label, value, onChange, placeholder }: Props) {
             onPress={() => onChange('')}
             hitSlop={10}
             accessibilityRole="button"
-            accessibilityLabel={`Remove ${countryName(value)}`}>
+            accessibilityLabel={t('common.remove', { name: countryName(value) })}>
             <X size={18} color={colors.textMuted} />
           </Pressable>
         </View>

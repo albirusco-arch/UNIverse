@@ -1,4 +1,4 @@
-import { t } from '@/i18n';
+import { locale, t } from '@/i18n';
 
 export function timeAgo(iso: string): string {
   const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
@@ -10,7 +10,7 @@ export function timeAgo(iso: string): string {
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', {
+  return new Date(iso).toLocaleDateString(locale(), {
     day: 'numeric',
     month: 'short',
     year: 'numeric',

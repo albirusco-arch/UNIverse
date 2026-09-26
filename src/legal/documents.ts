@@ -1,13 +1,16 @@
+import { getLanguage, type Language } from '@/i18n';
+
 /**
- * DRAFT legal texts. They describe how the app actually works (data collected,
- * moderation, AI research, ratings, groups) but must be reviewed by a lawyer
- * and completed with the company details before publishing. Replace every [PLACEHOLDER].
+ * DRAFT legal texts in English and Italian. They describe how the app actually
+ * works (data collected, moderation, AI research, ratings, groups) but must be
+ * reviewed by a lawyer and completed with the company details before
+ * publishing. Replace every [PLACEHOLDER] in both languages.
  */
 export type LegalDocId = 'terms' | 'privacy' | 'guidelines';
 
 type LegalDoc = { title: string; updated: string; sections: { heading: string; body: string }[] };
 
-const docs: Record<LegalDocId, LegalDoc> = {
+const en: Record<LegalDocId, LegalDoc> = {
   guidelines: {
     title: 'Community Guidelines',
     updated: 'Draft',
@@ -111,6 +114,112 @@ const docs: Record<LegalDocId, LegalDoc> = {
   },
 };
 
+const it: Record<LegalDocId, LegalDoc> = {
+  guidelines: {
+    title: 'Linee guida della community',
+    updated: 'Bozza',
+    sections: [
+      {
+        heading: 'Solo studenti',
+        body: 'UNIVERSE è per studenti universitari e ricercatori. Gli account si creano con un indirizzo email universitario; non condividere il tuo account e non registrarti per conto di altri.',
+      },
+      {
+        heading: 'Sii preciso',
+        body: 'Condividi requisiti ed equivalenze solo per esperienza diretta o da fonti ufficiali, indicando l’anno accademico a cui si riferiscono. Un’informazione sbagliata può costare crediti o denaro ad altri studenti.',
+      },
+      {
+        heading: 'Sii gentile',
+        body: 'Niente molestie, incitamento all’odio, discriminazioni, minacce, contenuti sessuali o attacchi personali, nei post, nei commenti, nei gruppi, nei canali e nelle chat dei club. Tolleranza zero per contenuti offensivi e utenti molesti.',
+      },
+      {
+        heading: 'Valutazioni corrette',
+        body: 'Valuta solo le università in cui hai davvero studiato o lavorato, in base alla tua esperienza. Le valutazioni riguardano l’università nel suo insieme: non nominare, valutare o prendere di mira singoli docenti o membri del personale.',
+      },
+      {
+        heading: 'Rispetta la privacy',
+        body: 'Non pubblicare dati personali, voti, documenti, screenshot di chat private o contatti di altre persone. Non condividere il codice invito di un gruppo privato con chi non ne fa parte.',
+      },
+      { heading: 'Niente spam', body: 'Niente pubblicità, link di affiliazione, servizi di tesi a pagamento, inviti di massa o post ripetuti.' },
+      {
+        heading: 'Moderazione',
+        body: 'Ogni post, commento, messaggio, gruppo e club può essere segnalato. I contenuti segnalati vengono esaminati entro 24 ore; quelli che violano queste regole vengono rimossi e chi le viola ripetutamente viene escluso. Puoi bloccare qualsiasi utente in qualsiasi momento.',
+      },
+    ],
+  },
+  terms: {
+    title: 'Termini d’uso',
+    updated: 'Bozza',
+    sections: [
+      {
+        heading: 'Il servizio',
+        body: 'UNIVERSE ([RAGIONE SOCIALE], [INDIRIZZO]) aiuta studenti e ricercatori a pianificare periodi di studio all’estero. Creando un account accetti questi termini e le Linee guida della community.',
+      },
+      {
+        heading: 'Requisiti',
+        body: 'Devi avere almeno 16 anni e accedere con un indirizzo email rilasciato da un’università o da un istituto di ricerca. Possiamo chiedere ulteriori prove dello status di studente e sospendere gli account che non soddisfano questo requisito.',
+      },
+      {
+        heading: 'Informazioni orientative, non approvazioni',
+        body: 'Abbinamenti esami, requisiti d’ingresso, borse di studio e informazioni sui visti sono ricercati automaticamente da fonti pubbliche e possono essere incompleti o non aggiornati. Ogni voce mostra la sua fonte e la data della verifica, e ciò che non è confermato su una pagina ufficiale viene segnalato. Il riconoscimento degli esami spetta solo alla tua università tramite il Learning Agreement, l’ammissione solo all’università ospitante e i visti solo alle autorità competenti: verifica sempre con loro.',
+      },
+      {
+        heading: 'Punteggi e valutazioni',
+        body: 'Lo UNIVERSE score combina indicatori ESG e di didattica tratti da fonti pubbliche con le valutazioni medie di studenti verificati. È un indicatore d’opinione a scopo orientativo, non un ranking ufficiale né un accreditamento.',
+      },
+      {
+        heading: 'I tuoi contenuti',
+        body: 'Resti titolare di ciò che pubblichi (post, commenti, messaggi, valutazioni, equivalenze, suggerimenti di club) e concedi a UNIVERSE una licenza per mostrarlo nell’app. Sei responsabile della sua correttezza e liceità.',
+      },
+      {
+        heading: 'Uso consentito',
+        body: 'Non puoi abusare del servizio, estrarne dati in modo automatico o spacciarti per altri. Possiamo rimuovere contenuti e sospendere account che violano questi termini o le Linee guida della community.',
+      },
+      {
+        heading: 'Responsabilità',
+        body: 'Il servizio è fornito “così com’è”. Nei limiti consentiti dalla legge, UNIVERSE non è responsabile delle decisioni prese sulla base delle informazioni presenti nell’app.',
+      },
+      { heading: 'Contatti', body: 'Domande: [EMAIL DI SUPPORTO]. Legge applicabile: [GIURISDIZIONE].' },
+    ],
+  },
+  privacy: {
+    title: 'Informativa sulla privacy',
+    updated: 'Bozza',
+    sections: [
+      { heading: 'Titolare del trattamento', body: '[RAGIONE SOCIALE], [INDIRIZZO], [EMAIL DI SUPPORTO].' },
+      {
+        heading: 'Dati raccolti',
+        body: 'Indirizzo email universitario (per l’accesso e la verifica dello status di studente) e l’università collegata al suo dominio; il profilo che inserisci (nome, università di provenienza, area, livello, destinazione, periodo di scambio); i contenuti che pubblichi (post, commenti, messaggi nei gruppi, equivalenze, suggerimenti di club); le valutazioni delle università; richieste e risultati delle ricerche AI; università salvate; iscrizioni ai gruppi; segnalazioni e blocchi. Non usiamo tracker pubblicitari.',
+      },
+      {
+        heading: 'Personalizzazione',
+        body: 'Per ordinare il feed «Per te» memorizziamo ciò che cerchi, le università che visiti o salvi e le ricerche che richiedi. Questi segnali sono privati, non vengono mai mostrati ad altri studenti e vengono eliminati con il tuo account.',
+      },
+      {
+        heading: 'Valutazioni',
+        body: 'Le tue valutazioni delle università sono salvate con il tuo account per permetterti di aggiornarle, ma agli altri studenti mostriamo solo le medie. Non raccogliamo valutazioni di singole persone.',
+      },
+      {
+        heading: 'Ricerca AI',
+        body: 'Quando richiedi una ricerca AI, la tua richiesta (università, corso, esami, cittadinanza, note) viene inviata al nostro fornitore di AI (Anthropic) per cercare pagine web pubbliche. Non inserire dati personali nel campo note.',
+      },
+      {
+        heading: 'Responsabili del trattamento',
+        body: 'Supabase (database, autenticazione e chat in tempo reale, regione UE consigliata) e Anthropic (elaborazione AI). I dati sono trasferiti fuori dall’UE solo con garanzie adeguate.',
+      },
+      {
+        heading: 'Conservazione ed eliminazione',
+        body: 'Puoi eliminare il tuo account in qualsiasi momento dalle Impostazioni: profilo, post, commenti, messaggi, valutazioni, ricerche e segnali di personalizzazione vengono eliminati definitivamente.',
+      },
+      {
+        heading: 'I tuoi diritti',
+        body: 'In base al GDPR puoi accedere ai tuoi dati, correggerli, esportarli o cancellarli e opporti al trattamento. Scrivi a [EMAIL DI SUPPORTO] o all’autorità di controllo.',
+      },
+    ],
+  },
+};
+
+const docs: Record<Language, Record<LegalDocId, LegalDoc>> = { en, it };
+
 export function getLegalDoc(id: LegalDocId): LegalDoc {
-  return docs[id];
+  return docs[getLanguage()][id];
 }

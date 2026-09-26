@@ -34,6 +34,7 @@ export const RequestSchema = z
       .array(z.object({ name: z.string().trim().min(1).max(200), ects: z.number().min(0).max(60).nullable() }))
       .max(12),
     notes: z.string().trim().max(500),
+    language: z.enum(['en', 'it']).default('en'),
   })
   .superRefine((request, ctx) => {
     const require = (condition: boolean, path: string, message: string) => {

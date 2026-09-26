@@ -70,6 +70,12 @@
       "expo-router",
       "expo-web-browser",
       [
+        "expo-localization",
+        {
+          "supportedLocales": ["en", "it"]
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#070A13",

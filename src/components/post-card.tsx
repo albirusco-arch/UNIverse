@@ -116,7 +116,7 @@ export function PostCard({ post, reason, expanded = false, onDeleted }: PostCard
           onPress={() => postMenu(post, onDeleted)}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="More actions">
+          accessibilityLabel={t('common.moreActions')}>
           <MoreHorizontal size={20} color={colors.textMuted} />
         </Pressable>
       </View>
@@ -137,7 +137,7 @@ export function PostCard({ post, reason, expanded = false, onDeleted }: PostCard
           hitSlop={8}
           accessibilityRole="button"
           accessibilityState={{ selected: post.likedByMe }}
-          accessibilityLabel={`Like, ${post.likeCount}`}
+          accessibilityLabel={t('common.like', { n: post.likeCount })}
           style={styles.action}>
           <Heart
             size={18}

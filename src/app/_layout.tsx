@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { FeedbackProvider } from '@/components/feedback';
+import { LanguageProvider, useLanguage } from '@/lib/language';
 import { SessionProvider, useSession } from '@/lib/session';
 import { colors } from '@/theme/tokens';
 
@@ -25,6 +26,7 @@ const modal = { presentation: 'modal' } as const;
 
 function RootNavigator() {
   const { ready } = useSession();
+  const { language } = useLanguage();
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();
@@ -33,7 +35,7 @@ function RootNavigator() {
   if (!ready) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+    <Stack key={language} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="welcome" options={{ animation: 'fade', gestureEnabled: false }} />
       <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
@@ -50,12 +52,14 @@ function RootNavigator() {
 export default function RootLayout() {
   return (
     <ThemeProvider value={theme}>
-      <SessionProvider>
-        <FeedbackProvider>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </FeedbackProvider>
-      </SessionProvider>
+      <LanguageProvider>
+        <SessionProvider>
+          <FeedbackProvider>
+            <StatusBar style="light" />
+            <RootNavigator />
+          </FeedbackProvider>
+        </SessionProvider>
+      </LanguageProvider>
     </ThemeProvider>
   );
 }

@@ -30,7 +30,7 @@ export function GroupRow({ group }: { group: Group }) {
     <Pressable
       onPress={() => router.push({ pathname: '/group/[id]', params: { id: group.id } })}
       accessibilityRole="button"
-      accessibilityLabel={`${group.name}${group.unreadCount ? `, ${group.unreadCount} unread` : ''}`}
+      accessibilityLabel={group.unreadCount ? `${group.name}, ${t('common.unread', { n: group.unreadCount })}` : group.name}
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.surfacePressed }]}>
       <GroupAvatar group={group} />
       <View style={styles.body}>

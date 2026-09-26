@@ -1,7 +1,36 @@
 import en, { type Dictionary } from './en';
+import it from './it';
 
-/** UNIVERSE ships in English. Strings stay in one dictionary so copy is easy to review. */
-const dictionary: Dictionary = en;
+/**
+ * English is the default; Italian is the second language. The active language
+ * is set once at start-up (device language or the choice in Settings) by
+ * LanguageProvider, which remounts the navigator when it changes.
+ */
+export const LANGUAGES = ['en', 'it'] as const;
+export type Language = (typeof LANGUAGES)[number];
+export type LanguagePreference = Language | 'system';
+
+const dictionaries: Record<Language, Dictionary> = { en, it };
+let active: Language = 'en';
+
+export function getLanguage(): Language {
+  return active;
+}
+
+export function setActiveLanguage(language: Language) {
+  active = language;
+}
+
+/** The language to use for a preference, given the device's language code (e.g. "it"). */
+export function resolveLanguage(preference: LanguagePreference, deviceLanguage: string | null | undefined): Language {
+  if (preference !== 'system') return preference;
+  return deviceLanguage?.toLowerCase().startsWith('it') ? 'it' : 'en';
+}
+
+/** BCP 47 locale for dates and numbers in the active language. */
+export function locale(): string {
+  return active === 'it' ? 'it-IT' : 'en-GB';
+}
 
 /** Dot-separated paths to every string leaf of the dictionary. */
 type Leaves<T, Prefix extends string = ''> = {
@@ -14,7 +43,7 @@ type Leaves<T, Prefix extends string = ''> = {
 
 export type TranslationKey = Leaves<Dictionary>;
 
-function lookup(key: string): string | undefined {
+function lookup(dictionary: Dictionary, key: string): string | undefined {
   let value: unknown = dictionary;
   for (const part of key.split('.')) {
     value = (value as Record<string, unknown> | undefined)?.[part];
@@ -24,10 +53,17 @@ function lookup(key: string): string | undefined {
 
 /**
  * Translate `key`, replacing `{name}` placeholders. When `vars.n` is 1 and a
- * `<key>_one` string exists, that singular form is used ("1 member").
+ * `<key>_one` string exists, that singular form is used ("1 member"). Falls
+ * back to English if a string is missing.
  */
 export function t(key: TranslationKey, vars?: Record<string, string | number>): string {
-  let text = (vars?.n === 1 ? lookup(`${key}_one`) : undefined) ?? lookup(key) ?? key;
+  const dictionary = dictionaries[active];
+  const singular = vars?.n === 1 ? `${key}_one` : null;
+  let text =
+    (singular ? (lookup(dictionary, singular) ?? lookup(en, singular)) : undefined) ??
+    lookup(dictionary, key) ??
+    lookup(en, key) ??
+    key;
   if (vars) {
     for (const [name, replacement] of Object.entries(vars)) {
       text = text.replaceAll(`{${name}}`, String(replacement));
@@ -38,5 +74,5 @@ export function t(key: TranslationKey, vars?: Record<string, string | number>): 
 
 /** Direct access for non-string entries such as lists. */
 export function strings(): Dictionary {
-  return dictionary;
+  return dictionaries[active];
 }
