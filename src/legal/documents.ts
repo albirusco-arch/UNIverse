@@ -17,7 +17,7 @@ const en: Record<LegalDocId, LegalDoc> = {
     sections: [
       {
         heading: 'Students only',
-        body: 'UNIVERSE is for university students and researchers. Accounts are created with a university email address; do not share your account or sign up for someone else.',
+        body: 'UNIverse is for university students and researchers. Accounts are created with a university email address; do not share your account or sign up for someone else.',
       },
       {
         heading: 'Be accurate',
@@ -48,7 +48,7 @@ const en: Record<LegalDocId, LegalDoc> = {
     sections: [
       {
         heading: 'The service',
-        body: 'UNIVERSE ([COMPANY NAME], [ADDRESS]) helps students and researchers plan study periods abroad. By creating an account you agree to these terms and to the Community Guidelines.',
+        body: 'UNIverse ([COMPANY NAME], [ADDRESS]) helps students and researchers plan study periods abroad. By creating an account you agree to these terms and to the Community Guidelines.',
       },
       {
         heading: 'Eligibility',
@@ -60,11 +60,11 @@ const en: Record<LegalDocId, LegalDoc> = {
       },
       {
         heading: 'Scores and ratings',
-        body: 'The UNIVERSE score combines ESG and teaching indicators found in public sources with averaged ratings from verified students. It is an opinion-based indicator for orientation, not an official ranking or accreditation.',
+        body: 'The UNIverse score combines ESG and teaching indicators found in public sources with averaged ratings from verified students. It is an opinion-based indicator for orientation, not an official ranking or accreditation.',
       },
       {
         heading: 'Your content',
-        body: 'You keep ownership of what you post (posts, comments, messages, ratings, equivalences, club suggestions) and grant UNIVERSE a licence to display it in the app. You are responsible for its accuracy and lawfulness.',
+        body: 'You keep ownership of what you post (posts, comments, messages, ratings, equivalences, club suggestions) and grant UNIverse a licence to display it in the app. You are responsible for its accuracy and lawfulness.',
       },
       {
         heading: 'Acceptable use',
@@ -72,7 +72,7 @@ const en: Record<LegalDocId, LegalDoc> = {
       },
       {
         heading: 'Liability',
-        body: 'The service is provided “as is”. To the extent permitted by law, UNIVERSE is not liable for decisions taken on the basis of information in the app.',
+        body: 'The service is provided “as is”. To the extent permitted by law, UNIverse is not liable for decisions taken on the basis of information in the app.',
       },
       { heading: 'Contact', body: 'Questions: [SUPPORT EMAIL]. Governing law: [JURISDICTION].' },
     ],
@@ -121,7 +121,7 @@ const it: Record<LegalDocId, LegalDoc> = {
     sections: [
       {
         heading: 'Solo studenti',
-        body: 'UNIVERSE è per studenti universitari e ricercatori. Gli account si creano con un indirizzo email universitario; non condividere il tuo account e non registrarti per conto di altri.',
+        body: 'UNIverse è per studenti universitari e ricercatori. Gli account si creano con un indirizzo email universitario; non condividere il tuo account e non registrarti per conto di altri.',
       },
       {
         heading: 'Sii preciso',
@@ -152,7 +152,7 @@ const it: Record<LegalDocId, LegalDoc> = {
     sections: [
       {
         heading: 'Il servizio',
-        body: 'UNIVERSE ([RAGIONE SOCIALE], [INDIRIZZO]) aiuta studenti e ricercatori a pianificare periodi di studio all’estero. Creando un account accetti questi termini e le Linee guida della community.',
+        body: 'UNIverse ([RAGIONE SOCIALE], [INDIRIZZO]) aiuta studenti e ricercatori a pianificare periodi di studio all’estero. Creando un account accetti questi termini e le Linee guida della community.',
       },
       {
         heading: 'Requisiti',
@@ -164,11 +164,11 @@ const it: Record<LegalDocId, LegalDoc> = {
       },
       {
         heading: 'Punteggi e valutazioni',
-        body: 'Lo UNIVERSE score combina indicatori ESG e di didattica tratti da fonti pubbliche con le valutazioni medie di studenti verificati. È un indicatore d’opinione a scopo orientativo, non un ranking ufficiale né un accreditamento.',
+        body: 'Lo UNIverse score combina indicatori ESG e di didattica tratti da fonti pubbliche con le valutazioni medie di studenti verificati. È un indicatore d’opinione a scopo orientativo, non un ranking ufficiale né un accreditamento.',
       },
       {
         heading: 'I tuoi contenuti',
-        body: 'Resti titolare di ciò che pubblichi (post, commenti, messaggi, valutazioni, equivalenze, suggerimenti di club) e concedi a UNIVERSE una licenza per mostrarlo nell’app. Sei responsabile della sua correttezza e liceità.',
+        body: 'Resti titolare di ciò che pubblichi (post, commenti, messaggi, valutazioni, equivalenze, suggerimenti di club) e concedi a UNIverse una licenza per mostrarlo nell’app. Sei responsabile della sua correttezza e liceità.',
       },
       {
         heading: 'Uso consentito',
@@ -176,7 +176,7 @@ const it: Record<LegalDocId, LegalDoc> = {
       },
       {
         heading: 'Responsabilità',
-        body: 'Il servizio è fornito “così com’è”. Nei limiti consentiti dalla legge, UNIVERSE non è responsabile delle decisioni prese sulla base delle informazioni presenti nell’app.',
+        body: 'Il servizio è fornito “così com’è”. Nei limiti consentiti dalla legge, UNIverse non è responsabile delle decisioni prese sulla base delle informazioni presenti nell’app.',
       },
       { heading: 'Contatti', body: 'Domande: [EMAIL DI SUPPORTO]. Legge applicabile: [GIURISDIZIONE].' },
     ],

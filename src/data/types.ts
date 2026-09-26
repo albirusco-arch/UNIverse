@@ -265,7 +265,7 @@ export type RatingSummary = Record<RatingDimension, number | null> & { count: nu
 
 export type UniversityScore = {
   universityId: string;
-  /** Combined UNIVERSE score, 0–100. */
+  /** Combined UNIverse score, 0–100. */
   score: number | null;
   esgScore: number | null;
   teachingScore: number | null;

@@ -1,5 +1,5 @@
 /**
- * UNIVERSE design tokens, derived from the logo: near-black navy background,
+ * UNIverse design tokens, derived from the logo: near-black navy background,
  * electric blue → violet brand gradient, white orbit highlights.
  * Text colours keep at least WCAG AA contrast on the background.
  */

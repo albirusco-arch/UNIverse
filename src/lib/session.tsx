@@ -6,9 +6,14 @@ import { fetchProfile, notifyChange, saveProfile, setDemoIdentity } from '@/data
 import type { Profile } from '@/data/types';
 import { universityForEmail } from '@/lib/student-email';
 import { isDemoMode, supabase } from '@/lib/supabase';
+import { upcomingTerms } from '@/lib/terms';
 
 const PROFILE_KEY = 'universe.profile.v2';
 const DEMO_EMAIL_KEY = 'universe.demo-email.v2';
+const GUEST_KEY = 'universe.guest';
+
+/** Account used by "Try the demo" (demo mode only). */
+export const DEMO_ACCOUNT_EMAIL = 'demo.student@studenti.unimi.it';
 
 const emptyProfile: Profile = {
   id: 'me',
@@ -24,16 +29,22 @@ const emptyProfile: Profile = {
 
 type SessionState = {
   ready: boolean;
-  /** Signed in with a university email. The app requires it. */
+  /** Signed in with a university email. */
   signedIn: boolean;
+  /** Browsing without an account (catalogue and general university info only). */
+  guest: boolean;
   email: string | null;
   profile: Profile;
   /** Name, home university, field and level are filled in. */
   profileComplete: boolean;
   updateProfile: (changes: Partial<Profile>) => Promise<void>;
-  sendCode: (email: string) => Promise<void>;
+  continueAsGuest: () => Promise<void>;
+  /** Sends a 6-digit code. With `createUser: false` (log in) unknown emails are rejected. */
+  sendCode: (email: string, options: { createUser: boolean }) => Promise<void>;
   verifyCode: (email: string, code: string) => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
+  /** Demo mode: signs in as a sample student with a complete profile. */
+  startDemo: () => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -61,6 +72,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [demoEmail, setDemoEmail] = useState<string | null>(null);
+  const [guestFlag, setGuestFlag] = useState(false);
   const [profile, setProfile] = useState<Profile>(emptyProfile);
 
   // Initial load: cached profile, then the session.
@@ -68,8 +80,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       const local = await readLocalProfile();
+      const guest = await AsyncStorage.getItem(GUEST_KEY).catch(() => null);
       if (cancelled) return;
       if (local) setProfile(local);
+      setGuestFlag(guest === '1');
       if (isDemoMode) {
         const email = await AsyncStorage.getItem(DEMO_EMAIL_KEY).catch(() => null);
         if (!cancelled) setDemoEmail(email);
@@ -126,33 +140,55 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [profile, userId],
   );
 
-  const sendCode = useCallback(async (email: string) => {
+  const continueAsGuest = useCallback(async () => {
+    await AsyncStorage.setItem(GUEST_KEY, '1').catch(() => undefined);
+    setGuestFlag(true);
+  }, []);
+
+  const sendCode = useCallback(async (email: string, { createUser }: { createUser: boolean }) => {
     if (!supabase) return;
-    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: true } });
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: createUser } });
     if (error) throw error;
   }, []);
 
-  const verifyCode = useCallback(async (email: string, code: string) => {
-    if (!supabase) {
-      // Demo mode: mimic the database trigger that links the account to its university.
-      const university = universityForEmail(email);
-      const next: Profile = {
-        ...emptyProfile,
-        displayName: email.split('@')[0].replace(/[._]/g, ' '),
-        homeUniversity: university?.name ?? '',
-        homeUniversityId: university?.id ?? null,
-        verified: true,
-      };
-      await AsyncStorage.setItem(DEMO_EMAIL_KEY, email).catch(() => undefined);
-      await writeLocalProfile(next);
-      setProfile(next);
-      setDemoEmail(email);
-      notifyChange();
-      return;
-    }
-    const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
-    if (error) throw error;
+  /** Demo mode: mimic the database trigger that links the account to its university. */
+  const signInDemo = useCallback(async (email: string, extra: Partial<Profile> = {}) => {
+    const university = universityForEmail(email);
+    const next: Profile = {
+      ...emptyProfile,
+      displayName: email.split('@')[0].replace(/[._]/g, ' '),
+      homeUniversity: university?.name ?? '',
+      homeUniversityId: university?.id ?? null,
+      verified: true,
+      ...extra,
+    };
+    await AsyncStorage.setItem(DEMO_EMAIL_KEY, email).catch(() => undefined);
+    await writeLocalProfile(next);
+    setProfile(next);
+    setDemoEmail(email);
+    notifyChange();
   }, []);
+
+  const verifyCode = useCallback(
+    async (email: string, code: string) => {
+      if (!supabase) return signInDemo(email);
+      const { error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+      if (error) throw error;
+    },
+    [signInDemo],
+  );
+
+  const startDemo = useCallback(
+    () =>
+      signInDemo(DEMO_ACCOUNT_EMAIL, {
+        displayName: 'Alex Demo',
+        field: 'biochemistry',
+        level: 'bachelor',
+        destinationId: 'heidelberg',
+        term: upcomingTerms()[0],
+      }),
+    [signInDemo],
+  );
 
   const signInWithPassword = useCallback(async (email: string, password: string) => {
     if (!supabase) return;
@@ -169,23 +205,43 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     setProfile(emptyProfile);
     await writeLocalProfile(null);
+    await AsyncStorage.removeItem(GUEST_KEY).catch(() => undefined);
+    setGuestFlag(false);
     notifyChange();
   }, []);
 
+  const signedIn = isDemoMode ? demoEmail !== null : session !== null;
   const value = useMemo<SessionState>(
     () => ({
       ready,
-      signedIn: isDemoMode ? demoEmail !== null : session !== null,
+      signedIn,
+      guest: guestFlag && !signedIn,
       email: isDemoMode ? demoEmail : (session?.user.email ?? null),
       profile,
       profileComplete: Boolean(profile.displayName && profile.homeUniversity && profile.field && profile.level),
       updateProfile,
+      continueAsGuest,
       sendCode,
       verifyCode,
       signInWithPassword,
+      startDemo,
       signOut,
     }),
-    [ready, demoEmail, session, profile, updateProfile, sendCode, verifyCode, signInWithPassword, signOut],
+    [
+      ready,
+      signedIn,
+      guestFlag,
+      demoEmail,
+      session,
+      profile,
+      updateProfile,
+      continueAsGuest,
+      sendCode,
+      verifyCode,
+      signInWithPassword,
+      startDemo,
+      signOut,
+    ],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

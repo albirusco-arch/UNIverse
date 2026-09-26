@@ -1,12 +1,14 @@
 import { Redirect, router } from 'expo-router';
-import { Mail, MessageCircle, ShieldCheck, Sparkles, type LucideIcon } from 'lucide-react-native';
+import { Compass, LogIn, MessageCircle, Play, ShieldCheck, Sparkles, UserPlus, type LucideIcon } from 'lucide-react-native';
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { LogoMark } from '@/components/brand';
+import { Lockup } from '@/components/brand';
 import { GradientText } from '@/components/gradient-text';
 import { Button, IconTile, Screen, Text } from '@/components/ui';
 import { t } from '@/i18n';
 import { useSession } from '@/lib/session';
+import { isDemoMode } from '@/lib/supabase';
 import { gradients, spacing, type } from '@/theme/tokens';
 
 const features: { icon: LucideIcon; colors: typeof gradients.primary; title: () => string; body: () => string }[] = [
@@ -16,22 +18,61 @@ const features: { icon: LucideIcon; colors: typeof gradients.primary; title: () 
 ];
 
 export default function WelcomeScreen() {
-  const { signedIn } = useSession();
+  const { signedIn, continueAsGuest, startDemo } = useSession();
+  const [starting, setStarting] = useState(false);
   if (signedIn) return <Redirect href="/" />;
+
+  const tryDemo = async () => {
+    setStarting(true);
+    try {
+      await startDemo();
+      router.replace('/');
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const explore = async () => {
+    await continueAsGuest();
+    router.replace('/explore');
+  };
 
   return (
     <Screen
       footer={
         <View style={styles.footer}>
-          <Button title={t('welcome.cta')} icon={Mail} onPress={() => router.push('/auth')} />
+          {isDemoMode && (
+            <>
+              <Button title={t('welcome.demo')} icon={Play} onPress={tryDemo} loading={starting} />
+              <Text variant="caption" color="amber" align="center">
+                {t('welcome.demoBody')}
+              </Text>
+            </>
+          )}
+          <View style={styles.row}>
+            <Button
+              title={t('welcome.login')}
+              icon={LogIn}
+              variant="secondary"
+              style={styles.flex}
+              onPress={() => router.push({ pathname: '/auth', params: { mode: 'login' } })}
+            />
+            <Button
+              title={t('welcome.signup')}
+              icon={UserPlus}
+              variant={isDemoMode ? 'secondary' : 'primary'}
+              style={styles.flex}
+              onPress={() => router.push({ pathname: '/auth', params: { mode: 'signup' } })}
+            />
+          </View>
+          <Button title={t('welcome.guest')} icon={Compass} variant="ghost" onPress={explore} />
           <Text variant="caption" color="textMuted" align="center">
             {t('welcome.legal')}
           </Text>
         </View>
       }>
       <View style={styles.lockup}>
-        <LogoMark size={190} />
-        <Text style={styles.logotype}>UNIVERSE</Text>
+        <Lockup width={150} />
       </View>
       <View style={styles.hero}>
         <Text variant="display">{t('welcome.title')}</Text>
@@ -60,15 +101,7 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   lockup: {
     alignItems: 'center',
-    gap: spacing.md,
     marginTop: spacing.xl,
-  },
-  logotype: {
-    color: '#FFFFFF',
-    fontSize: 26,
-    fontWeight: '500',
-    letterSpacing: 10,
-    marginLeft: 10,
   },
   hero: {
     marginTop: spacing.xxxl,
@@ -91,5 +124,12 @@ const styles = StyleSheet.create({
   },
   footer: {
     gap: spacing.sm,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  flex: {
+    flex: 1,
   },
 });

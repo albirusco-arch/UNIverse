@@ -6,10 +6,10 @@ import { useSession } from '@/lib/session';
 import { colors } from '@/theme/tokens';
 
 export default function TabsLayout() {
-  const { signedIn, profileComplete } = useSession();
-  // UNIVERSE is for students only: sign in with a university email first.
-  if (!signedIn) return <Redirect href="/welcome" />;
-  if (!profileComplete) return <Redirect href="/onboarding" />;
+  const { signedIn, guest, profileComplete } = useSession();
+  // Students sign in with a university email; guests can browse the catalogue.
+  if (!signedIn && !guest) return <Redirect href="/welcome" />;
+  if (signedIn && !profileComplete) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs

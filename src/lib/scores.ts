@@ -1,5 +1,5 @@
 /**
- * The UNIVERSE score, mirrored by the university_scores view in
+ * The UNIverse score, mirrored by the university_scores view in
  * supabase/migrations/20260926000300_quality_and_clubs.sql (keep them in sync).
  * Pure module so it can be unit-tested with node --test.
  */

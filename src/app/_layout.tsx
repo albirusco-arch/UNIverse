@@ -9,6 +9,7 @@ import { SessionProvider, useSession } from '@/lib/session';
 import { colors } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({ fade: true, duration: 300 });
 
 const theme: Theme = {
   ...DarkTheme,

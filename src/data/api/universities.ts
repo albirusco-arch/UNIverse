@@ -1,6 +1,6 @@
 /**
  * Universities: saved list, community stats, ESG / teaching insights, student
- * ratings, the combined UNIVERSE score, and student clubs.
+ * ratings, the combined UNIverse score, and student clubs.
  */
 import { combineScore } from '@/lib/scores';
 

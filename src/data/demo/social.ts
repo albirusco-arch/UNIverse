@@ -40,7 +40,7 @@ export function createDemoGroups(): DemoGroup[] {
     {
       ...base,
       id: 'g-universe',
-      name: 'UNIVERSE announcements',
+      name: 'UNIverse announcements',
       description: 'Product news and tips. Only admins post here.',
       kind: 'channel',
       visibility: 'public',

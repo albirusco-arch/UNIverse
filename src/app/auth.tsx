@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { BadgeCheck, Check, KeyRound, Mail } from 'lucide-react-native';
 import { useState } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
@@ -12,10 +12,16 @@ import { isStudentEmail, universityForEmail } from '@/lib/student-email';
 import { isDemoMode } from '@/lib/supabase';
 import { colors, spacing } from '@/theme/tokens';
 
-/** The sign-up trigger rejects non-university addresses with this Supabase error. */
+type Mode = 'login' | 'signup';
+
+/**
+ * The sign-up trigger rejects non-university addresses with a database error;
+ * logging in with an unknown email fails because sign-ups are off for that call.
+ */
 function authErrorMessage(err: unknown): string {
   const message = err instanceof Error ? err.message : '';
   if (/database error saving new user|university email/i.test(message)) return t('auth.notUniversity');
+  if (/signups? not allowed|otp_disabled|user not found/i.test(message)) return t('auth.noAccount');
   return message || t('common.error');
 }
 
@@ -27,6 +33,8 @@ function suggestUniversity(email: string) {
 
 export default function AuthScreen() {
   const { sendCode, verifyCode, signInWithPassword } = useSession();
+  const params = useLocalSearchParams<{ mode?: string }>();
+  const [mode, setMode] = useState<Mode>(params.mode === 'login' ? 'login' : 'signup');
   const [step, setStep] = useState<'email' | 'code' | 'password'>('email');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
@@ -45,7 +53,8 @@ export default function AuthScreen() {
       return setError(t('auth.notUniversity'));
     }
     setRejected(false);
-    if (!accepted) return setError(t('auth.acceptTerms'));
+    // Terms are accepted when the account is created.
+    if (mode === 'signup' && !accepted) return setError(t('auth.acceptTerms'));
     setError(null);
     if (REVIEW_EMAIL && normalized === REVIEW_EMAIL && !isDemoMode) {
       setEmail(normalized);
@@ -54,7 +63,7 @@ export default function AuthScreen() {
     }
     setBusy(true);
     try {
-      await sendCode(normalized);
+      await sendCode(normalized, { createUser: mode === 'signup' });
       setEmail(normalized);
       setStep('code');
     } catch (err) {
@@ -102,9 +111,17 @@ export default function AuthScreen() {
       }>
       <View style={styles.intro}>
         <LogoMark size={72} />
-        <Text variant="title1">{step === 'code' ? t('auth.codeTitle') : t('auth.title')}</Text>
+        <Text variant="title1">
+          {step === 'code' ? t('auth.codeTitle') : mode === 'login' ? t('auth.loginTitle') : t('auth.title')}
+        </Text>
         <Text variant="body" color="textSecondary">
-          {step === 'code' ? t('auth.codeBody', { email }) : step === 'password' ? email : t('auth.body')}
+          {step === 'code'
+            ? t('auth.codeBody', { email })
+            : step === 'password'
+              ? email
+              : mode === 'login'
+                ? t('auth.loginBody')
+                : t('auth.body')}
         </Text>
       </View>
 
@@ -135,19 +152,21 @@ export default function AuthScreen() {
               </Text>
             </View>
           )}
-          <Pressable
-            onPress={() => setAccepted((value) => !value)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: accepted }}
-            style={styles.terms}>
-            <View style={[styles.checkbox, accepted && styles.checkboxChecked]}>
-              {accepted && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
-            </View>
-            <Text variant="callout" color="textSecondary" style={styles.termsText}>
-              {t('auth.terms')}
-            </Text>
-          </Pressable>
-          <View style={styles.links}>
+          {mode === 'signup' && (
+            <Pressable
+              onPress={() => setAccepted((value) => !value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: accepted }}
+              style={styles.terms}>
+              <View style={[styles.checkbox, accepted && styles.checkboxChecked]}>
+                {accepted && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
+              </View>
+              <Text variant="callout" color="textSecondary" style={styles.termsText}>
+                {t('auth.terms')}
+              </Text>
+            </Pressable>
+          )}
+          <View style={[styles.links, mode === 'login' && styles.linksLogin]}>
             <Text variant="caption" color="primaryLight" onPress={() => router.push('/legal/terms')} accessibilityRole="link">
               {t('settings.terms')}
             </Text>
@@ -211,6 +230,19 @@ export default function AuthScreen() {
           {t('auth.missingUniversity')}
         </Text>
       )}
+      {step === 'email' && (
+        <Text
+          variant="callout"
+          color="primaryLight"
+          style={styles.switchMode}
+          onPress={() => {
+            setMode(mode === 'login' ? 'signup' : 'login');
+            setError(null);
+          }}
+          accessibilityRole="button">
+          {mode === 'login' ? t('auth.toSignup') : t('auth.toLogin')}
+        </Text>
+      )}
     </Screen>
   );
 }
@@ -260,6 +292,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.lg,
     marginLeft: 34,
+  },
+  linksLogin: {
+    marginLeft: 0,
+  },
+  switchMode: {
+    marginTop: spacing.xl,
+    fontWeight: '600',
   },
   codeInput: {
     fontSize: 22,

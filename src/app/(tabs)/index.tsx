@@ -140,7 +140,7 @@ export default function HomeScreen() {
   return (
     <Screen tab>
       <View style={styles.topBar}>
-        <Wordmark size={16} />
+        <Wordmark size={13} />
         <View style={styles.topRight}>
           <DemoBadge />
           <Pressable onPress={() => router.push('/profile')} accessibilityRole="button" accessibilityLabel={t('profile.title')}>

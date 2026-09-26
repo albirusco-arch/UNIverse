@@ -18,7 +18,7 @@ const PILLARS: InsightPillarName[] = ['environmental', 'social', 'governance', '
 const REFRESH_AFTER_DAYS = 30;
 
 /**
- * The "Quality" tab of a university: the UNIVERSE score, student ratings and the
+ * The "Quality" tab of a university: the UNIverse score, student ratings and the
  * ESG / teaching evidence researched by AI (only verified evidence is scored).
  */
 export function QualityPanel({ university }: { university: University }) {

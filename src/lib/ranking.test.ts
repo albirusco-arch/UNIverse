@@ -81,7 +81,7 @@ const ratings = (count: number, value: number | null): RatingSummary => ({
   sustainability: value,
 });
 
-test('the UNIVERSE score matches the database view', () => {
+test('the UNIverse score matches the database view', () => {
   assert.equal(studentScore(ratings(2, 5)), null);
   assert.equal(studentScore(ratings(3, 4)), 75);
   const full = combineScore('heidelberg', 70, 60, ratings(3, 4));

@@ -3,7 +3,7 @@
  *
  * Returns the cached ESG / teaching insights when they are fresh; otherwise marks
  * them "running", researches them in the background with Claude, stores the
- * verified result and upserts the student clubs it found. The combined UNIVERSE
+ * verified result and upserts the student clubs it found. The combined UNIverse
  * score (with student ratings) is computed by the university_scores view.
  */
 import Anthropic from '@anthropic-ai/sdk';

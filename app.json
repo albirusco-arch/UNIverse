@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Universe",
+    "name": "UNIverse",
     "slug": "universe",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -64,6 +64,7 @@
     },
     "web": {
       "output": "single",
+      "themeColor": "#070A13",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
@@ -80,7 +81,7 @@
         {
           "backgroundColor": "#070A13",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 160
+          "imageWidth": 300
         }
       ]
     ],

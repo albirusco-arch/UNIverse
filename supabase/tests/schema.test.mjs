@@ -142,7 +142,7 @@ assert.equal(await count(B, 'select count(*)::int as n from public.user_signals'
 console.log('✓ research requests are written by the backend only; research and signals are private');
 
 // ---------------------------------------------------------------------------
-// Ratings, insights and the UNIVERSE score
+// Ratings, insights and the UNIverse score
 
 const rate = (user, t, p, e, s) =>
   as(user, `insert into public.university_ratings (university_id, user_id, teaching, professors, environment, sustainability, relation, academic_year)
@@ -169,7 +169,7 @@ assert.equal(score.rating_count, 3);
 assert.equal(score.provisional, false);
 assert.equal(score.student_score, 75); // average 4/5 -> 75/100
 assert.equal(score.score, 70); // 0.35*70 + 0.25*60 + 0.40*75 = 69.5, rounded half up
-console.log('✓ ratings are private, one per student; the UNIVERSE score combines ESG, teaching and students');
+console.log('✓ ratings are private, one per student; the UNIverse score combines ESG, teaching and students');
 
 // ---------------------------------------------------------------------------
 // Clubs

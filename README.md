@@ -4,7 +4,7 @@ Mobile app (iOS and Android) for university students and researchers who study a
 
 - **Students only**: sign-in with a university email address (over 10,000 universities recognised by their domain).
 - **AI research with sources**: course matching, entry requirements, scholarships and visas; every item cites an official page and anything unconfirmed is flagged.
-- **UNIVERSE score**: ESG and teaching-quality indicators researched by AI (only verified evidence counts) plus ratings from verified students. The best universities are promoted as “Top rated”.
+- **UNIverse score**: ESG and teaching-quality indicators researched by AI (only verified evidence counts) plus ratings from verified students. The best universities are promoted as “Top rated”.
 - **Personalised community**: the “For you” feed adapts to each student's courses, research and universities.
 - **Groups and channels** (a mix of WhatsApp and Telegram) and **student clubs** with chat.
 
