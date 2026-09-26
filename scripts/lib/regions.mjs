@@ -49,3 +49,14 @@ export const COUNTRY_NAMES = {
   VG: 'British Virgin Islands',
   VN: 'Vietnam',
 };
+
+// Europe first (including the UK, Ireland and Switzerland), then Canada, then
+// Australia, then every other country, with the United States last. Mirrors
+// src/lib/destination-order.ts (checked by regions.test.mjs).
+export function destinationRank(region, countryCode) {
+  if (region === 'europe' || region === 'uk') return 0;
+  if (countryCode === 'CA') return 1;
+  if (countryCode === 'AU') return 2;
+  if (countryCode === 'US') return 4;
+  return 3;
+}

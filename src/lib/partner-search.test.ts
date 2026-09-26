@@ -7,7 +7,7 @@ import { FIELD_ISCED, iscedOverlap, subjectCoverage } from './isced.ts';
 import { filterOptions, NO_FILTERS, searchPartners, trustRank } from './partner-search.ts';
 
 function university(id: string, countryCode: string, region: Region, name = id): University {
-  return { id, name, city: '', country: countryCode, countryCode, region, website: '', emailDomains: [], erasmusCode: null, erasmus: region === 'europe', featured: false };
+  return { id, name, city: '', country: countryCode, countryCode, region, website: '', emailDomains: [], erasmusCode: null, erasmus: region === 'europe', featured: false, kind: 'university', verified: false };
 }
 
 const catalogue = new Map(

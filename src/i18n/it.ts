@@ -160,6 +160,7 @@ const it: Dictionary = {
     equivalences_one: '{n} equivalenza',
     suggest: 'Manca un’università? Segnalacela',
     showMore: 'Mostra altre',
+    businessSchools: 'Business school',
   },
   score: {
     title: 'UNIverse score',
@@ -208,6 +209,8 @@ const it: Dictionary = {
     noEquivalences: 'Nessuna equivalenza condivisa. Condividi la tua quando il learning agreement è firmato.',
     addEquivalence: 'Condividi un’equivalenza',
     saveUniversity: 'Salva università',
+    businessSchool: 'Business school',
+    unverified: 'Dati tratti da elenchi pubblici, non ancora controllati dal nostro team. Fa fede il sito ufficiale.',
   },
   quality: {
     summary: 'Valutazione',

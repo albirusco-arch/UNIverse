@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Award, Mail, Search, SearchX } from 'lucide-react-native';
+import { Award, Briefcase, Mail, Search, SearchX } from 'lucide-react-native';
 import { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 
@@ -19,15 +19,17 @@ import {
   universities,
   type Scope,
 } from '@/data/api';
-import { REGIONS, type Region, type University } from '@/data/types';
+import { type Region, type University } from '@/data/types';
 import { locale, t } from '@/i18n';
 import { SUPPORT_EMAIL } from '@/lib/config';
+import { REGION_ORDER } from '@/lib/destination-order';
 import { useSession } from '@/lib/session';
 import { useQuery } from '@/lib/use-query';
 import { spacing } from '@/theme/tokens';
 
 const PAGE = 40;
-const REGION_FILTERS: (Region | 'all')[] = ['all', ...REGIONS];
+// Europe first, as the catalogue itself (then Canada, Australia, others, the US).
+const REGION_FILTERS: (Region | 'all')[] = ['all', ...REGION_ORDER];
 type Sort = 'top' | 'all';
 /** Partner-first: the agreements of the student's home university come before the whole catalogue. */
 type Mode = 'partners' | 'all';
@@ -52,6 +54,7 @@ export default function ExploreScreen() {
   const [region, setRegion] = useState<Region | 'all'>(isRegion(params.region) ? params.region : 'all');
   const [scope, setScope] = useState<Scope>(isScope(params.scope) ? params.scope : 'all');
   const [sort, setSort] = useState<Sort>(params.sort === 'top' ? 'top' : 'all');
+  const [businessOnly, setBusinessOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE);
 
   // Other tabs can open Explore with filters set; adopt new params when they change.
@@ -70,11 +73,12 @@ export default function ExploreScreen() {
   const { data: savedIds } = useQuery(listSavedUniversityIds, []);
   const { data: scores } = useQuery(listScores, []);
 
+  const kind = businessOnly ? 'business_school' : 'all';
   let results: University[];
   let total: number;
   if (sort === 'top') {
     // Every university with a score, best first (top-rated ones are the non-provisional ≥ 75).
-    const matching = new Set(searchUniversities(query, { region, scope, limit: universities.length }).map((u) => u.id));
+    const matching = new Set(searchUniversities(query, { region, scope, kind, limit: universities.length }).map((u) => u.id));
     const ranked = Object.values(scores ?? {})
       .filter((s) => s.score !== null && matching.has(s.universityId))
       .sort((a, b) => Number(a.provisional) - Number(b.provisional) || (b.score ?? 0) - (a.score ?? 0))
@@ -83,7 +87,7 @@ export default function ExploreScreen() {
     total = ranked.length;
     results = ranked.slice(0, limit);
   } else {
-    results = searchUniversities(query, { region, scope, limit: limit + 1 });
+    results = searchUniversities(query, { region, scope, kind, limit: limit + 1 });
     total = results.length;
     results = results.slice(0, limit);
   }
@@ -154,6 +158,13 @@ export default function ExploreScreen() {
                 tone="success"
                 selected={sort === 'top'}
                 onPress={() => resetPaging(setSort)(sort === 'top' ? 'all' : 'top')}
+              />
+              <Chip
+                label={t('explore.businessSchools')}
+                icon={Briefcase}
+                tone="accent"
+                selected={businessOnly}
+                onPress={() => resetPaging(setBusinessOnly)(!businessOnly)}
               />
               {REGION_FILTERS.map((r) => (
                 <Chip key={r} label={t(`regions.${r}`)} selected={region === r} onPress={() => resetPaging(setRegion)(r)} />

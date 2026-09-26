@@ -46,8 +46,11 @@ export type University = {
   erasmusCode: string | null;
   /** In an Erasmus+ programme country (otherwise "overseas"). */
   erasmus: boolean;
-  /** Hand-checked entry, shown first. */
+  /** Curated entry (scripts/data/universities.curated.json), shown first in its region. */
   featured: boolean;
+  kind: 'university' | 'business_school';
+  /** Name, website and email domains confirmed on the official website. */
+  verified: boolean;
 };
 
 export type UniversityStats = {

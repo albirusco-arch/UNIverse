@@ -1,6 +1,8 @@
 // Builds the university catalogue shipped with the app (src/data/universities.json,
-// src/data/countries.json) from three sources:
-//   1. scripts/data/universities.curated.json — hand-checked entries (win on conflicts)
+// src/data/countries.json, src/data/departments.json) from three sources:
+//   1. scripts/data/universities.curated.json — curated entries, Europe first (win on
+//      conflicts): English name, city, website, email domains, type (university or
+//      business school), departments, and whether the details were verified
 //   2. Hipo "university-domains-list" (MIT licence) — ~10k universities worldwide with
 //      their email domains, used for search and for university-email sign-in
 //   3. The Erasmus Without Paper registry catalogue — official Erasmus codes for
@@ -10,7 +12,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 
 import { parseEwpCatalogue } from './lib/ewp.mjs';
-import { COUNTRY_NAMES, ERASMUS_PROGRAMME, regionFor } from './lib/regions.mjs';
+import { COUNTRY_NAMES, destinationRank, ERASMUS_PROGRAMME, regionFor } from './lib/regions.mjs';
 
 const WORLD_URL = 'https://raw.githubusercontent.com/Hipo/university-domains-list/master/world_universities_and_domains.json';
 const EWP_URL = 'https://registry.erasmuswithoutpaper.eu/catalogue-v1.xml';
@@ -55,7 +57,7 @@ function add(entry) {
 }
 
 for (const u of curated) {
-  add({ ...u, emailDomains: u.emailDomains.map(clean), featured: true, erasmusCode: null });
+  add({ ...u, emailDomains: u.emailDomains.map(clean), featured: true, erasmusCode: null, verified: u.verified === true });
 }
 
 for (const u of world) {
@@ -81,6 +83,7 @@ for (const u of world) {
     emailDomains: domains,
     featured: false,
     erasmusCode: null,
+    verified: false,
   });
 }
 
@@ -104,6 +107,7 @@ for (const hei of ewp) {
       emailDomains: [domain],
       featured: false,
       erasmusCode: hei.erasmusCode,
+      verified: false,
     });
     ewpAdded++;
   }
@@ -121,13 +125,32 @@ for (const entry of entries) {
 }
 if (unmapped.size) console.warn(`No region for: ${[...unmapped].join(', ')} (defaulted to europe)`);
 
-// Featured (curated) first, then alphabetical: the app shows this order by default.
-entries.sort((a, b) => Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name));
+// Europe first, then Canada, Australia, other countries and the US; curated entries
+// first within each, then alphabetical. The app shows this order by default.
+const rank = (e) => destinationRank(regionFor(e.countryCode) ?? 'europe', e.countryCode);
+entries.sort((a, b) => rank(a) - rank(b) || Number(b.featured) - Number(a.featured) || a.name.localeCompare(b.name));
 
 // Compact tuples keep the bundled catalogue small:
-// [id, name, countryCode, city, website, "domain1 domain2", erasmusCode, featured]
-const rows = entries.map((e) => [e.id, e.name, e.countryCode, e.city, e.website, e.emailDomains.join(' '), e.erasmusCode ?? '', e.featured ? 1 : 0]);
+// [id, name, countryCode, city, website, "domain1 domain2", erasmusCode, featured, businessSchool, verified]
+const rows = entries.map((e) => [
+  e.id,
+  e.name,
+  e.countryCode,
+  e.city,
+  e.website,
+  e.emailDomains.join(' '),
+  e.erasmusCode ?? '',
+  e.featured ? 1 : 0,
+  e.type === 'business_school' ? 1 : 0,
+  e.verified ? 1 : 0,
+]);
+
+// Departments of curated entries: { universityId: [[name, kind], ...] }.
+const departments = Object.fromEntries(
+  curated.filter((u) => u.departments?.length).map((u) => [u.id, u.departments.map((d) => [d.name, d.kind])]),
+);
 
 writeFileSync(new URL('src/data/universities.json', root), JSON.stringify(rows));
+writeFileSync(new URL('src/data/departments.json', root), JSON.stringify(departments));
 writeFileSync(new URL('src/data/countries.json', root), JSON.stringify(Object.fromEntries(Object.entries(countries).sort())));
 console.log(`Wrote ${rows.length} universities in ${Object.keys(countries).length} countries`);

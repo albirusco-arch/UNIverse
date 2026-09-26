@@ -158,6 +158,7 @@ const en = {
     equivalences_one: '{n} equivalence',
     suggest: 'Missing a university? Tell us',
     showMore: 'Show more',
+    businessSchools: 'Business schools',
   },
   score: {
     title: 'UNIverse score',
@@ -206,6 +207,8 @@ const en = {
     noEquivalences: 'No equivalences shared yet. Share yours once your learning agreement is signed.',
     addEquivalence: 'Share an equivalence',
     saveUniversity: 'Save university',
+    businessSchool: 'Business school',
+    unverified: 'Details from public lists, not yet checked by our team. The official website is the reference.',
   },
   quality: {
     summary: 'Assessment',

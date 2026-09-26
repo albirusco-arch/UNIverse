@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 const root = new URL('..', import.meta.url);
 const countries = JSON.parse(readFileSync(new URL('src/data/countries.json', root), 'utf8'));
 const universities = JSON.parse(readFileSync(new URL('src/data/universities.json', root), 'utf8'));
+const departments = JSON.parse(readFileSync(new URL('src/data/departments.json', root), 'utf8'));
 
 const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
 const array = (values) => (values.length ? `array[${values.map(quote).join(', ')}]::text[]` : `'{}'::text[]`);
@@ -23,17 +24,34 @@ parts.push(
 );
 
 for (let start = 0; start < universities.length; start += BATCH) {
-  const rows = universities.slice(start, start + BATCH).map(([id, name, code, city, website, domains, erasmusCode, featured]) => {
-    const [countryName, region, erasmus] = countries[code];
-    return `  (${[id, name, city, countryName, code, region, website].map(quote).join(', ')}, ${array(domains ? domains.split(' ') : [])}, ${erasmusCode ? quote(erasmusCode) : 'null'}, ${erasmus === 1}, ${featured === 1})`;
-  });
+  const rows = universities
+    .slice(start, start + BATCH)
+    .map(([id, name, code, city, website, domains, erasmusCode, featured, businessSchool, verified]) => {
+      const [countryName, region, erasmus] = countries[code];
+      return `  (${[id, name, city, countryName, code, region, website].map(quote).join(', ')}, ${array(domains ? domains.split(' ') : [])}, ${erasmusCode ? quote(erasmusCode) : 'null'}, ${erasmus === 1}, ${featured === 1}, ${quote(businessSchool === 1 ? 'business_school' : 'university')}, ${verified === 1})`;
+    });
   parts.push(
-    'insert into public.universities (id, name, city, country, country_code, region, website, email_domains, erasmus_code, erasmus_programme, featured) values',
+    'insert into public.universities (id, name, city, country, country_code, region, website, email_domains, erasmus_code, erasmus_programme, featured, kind, verified) values',
     rows.join(',\n'),
     'on conflict (id) do update set name = excluded.name, city = excluded.city, country = excluded.country,',
     '  country_code = excluded.country_code, region = excluded.region, website = excluded.website,',
     '  email_domains = excluded.email_domains, erasmus_code = excluded.erasmus_code,',
-    '  erasmus_programme = excluded.erasmus_programme, featured = excluded.featured;',
+    '  erasmus_programme = excluded.erasmus_programme, featured = excluded.featured,',
+    '  kind = excluded.kind, verified = excluded.verified;',
+    '',
+  );
+}
+
+// Departments listed in the curated catalogue: unverified, pointing to the university website.
+const websites = new Map(universities.map((row) => [row[0], row[4]]));
+const departmentRows = Object.entries(departments).flatMap(([id, list]) =>
+  list.map(([name, kind]) => `  (${[id, name, kind, 'catalogue', websites.get(id)].map(quote).join(', ')})`),
+);
+if (departmentRows.length) {
+  parts.push(
+    'insert into public.departments (university_id, name, kind, source, source_url) values',
+    departmentRows.join(',\n'),
+    'on conflict (university_id, name_key) do nothing;',
     '',
   );
 }

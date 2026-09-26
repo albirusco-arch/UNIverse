@@ -40,6 +40,33 @@ for (const file of [...migrations.map((f) => `migrations/${f}`), 'seed.sql']) {
 const universityCount = (await db.query('select count(*)::int as n from public.universities')).rows[0].n;
 console.log(`✓ ${migrations.length} migrations and the seed applied (${universityCount} universities)`);
 
+// Catalogue: Europe-first curated entries with their type; nothing is marked verified yet.
+const catalogueCheck = (await db.query(
+  `select id, kind, verified from public.universities
+   where id in ('cbs.dk', 'unibocconi.it', 'barcelonagse.eu', 'hec.fr', 'essec.edu', 'escp.eu', 'novasbe.unl.pt', 'london.edu', 'oxford.ac.uk', 'tum')
+   order by id`,
+)).rows;
+assert.equal(catalogueCheck.length, 10);
+assert.deepEqual(
+  catalogueCheck.filter((u) => u.kind === 'business_school').map((u) => u.id),
+  ['barcelonagse.eu', 'cbs.dk', 'escp.eu', 'essec.edu', 'hec.fr', 'london.edu', 'novasbe.unl.pt', 'unibocconi.it'],
+);
+assert.equal((await db.query('select count(*)::int as n from public.universities where verified')).rows[0].n, 0);
+for (const [email, id] of [
+  ['anna@london.edu', 'london.edu'],
+  ['marc@edu.escp.eu', 'escp.eu'],
+  ['jo@student.maastrichtuniversity.nl', 'unimaas.nl'],
+  ['li@bse.eu', 'barcelonagse.eu'],
+  ['sam@student.cbs.dk', 'cbs.dk'],
+]) {
+  assert.equal((await db.query('select public.university_for_email($1) as id', [email])).rows[0].id, id, email);
+}
+const catalogueDepartments = (await db.query(
+  `select count(*)::int as n, bool_and(source = 'catalogue' and not verified) as unverified from public.departments where university_id = 'tum'`,
+)).rows[0];
+assert.deepEqual(catalogueDepartments, { n: 7, unverified: true });
+console.log('✓ catalogue: business schools typed, new schools recognised at sign-in, curated departments unverified');
+
 const uid = (n) => `00000000-0000-0000-0000-${String(n).padStart(12, '0')}`;
 const [A, B, C, D, E, R] = [1, 2, 3, 4, 5, 6].map(uid);
 

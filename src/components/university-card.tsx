@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { ArrowLeftRight, Bookmark, ChevronRight, MapPin, Users } from 'lucide-react-native';
+import { ArrowLeftRight, Bookmark, Briefcase, ChevronRight, MapPin, Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ScorePill, TopRatedBadge } from '@/components/score';
@@ -58,8 +58,11 @@ export function UniversityCard({ university, stats, score, saved = false }: Prop
               {university.country}
             </Text>
           </View>
-          {(stats && (stats.members > 0 || stats.equivalences > 0)) || score ? (
+          {(stats && (stats.members > 0 || stats.equivalences > 0)) || score || university.kind === 'business_school' ? (
             <View style={styles.stats}>
+              {university.kind === 'business_school' && (
+                <Badge icon={Briefcase} tone="accent" label={t('university.businessSchool')} />
+              )}
               <TopRatedBadge score={score} />
               {stats && stats.members > 0 && <Badge icon={Users} tone="primary" label={t('explore.members', { n: stats.members })} />}
               {stats && stats.equivalences > 0 && (

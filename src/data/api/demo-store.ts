@@ -7,6 +7,7 @@ import {
   createDemoMessages,
   createDemoRatings,
 } from '../demo/social';
+import { catalogueDepartments } from '../catalogue';
 import { createDemoDepartments, createDemoPartnerships } from '../demo/partners';
 import type { Department, PartnerExtraction, Partnership, Post, Research, Signal, UniversityRating } from '../types';
 
@@ -45,7 +46,10 @@ export function demoPartners(homeUniversityId: string): DemoPartnerState {
     const seeded = homeUniversityId === DEMO_HOME;
     state = {
       partnerships: seeded ? createDemoPartnerships(homeUniversityId) : [],
-      departments: createDemoDepartments(homeUniversityId),
+      // Departments from the catalogue when it lists them, otherwise samples.
+      departments: seeded || catalogueDepartments(homeUniversityId).length === 0
+        ? createDemoDepartments(homeUniversityId)
+        : catalogueDepartments(homeUniversityId),
       extraction: null,
     };
     partnerStates.set(homeUniversityId, state);

@@ -30,7 +30,7 @@ Built with Expo (React Native + TypeScript), Supabase (database, sign-in, realti
 | **“For you” community** | Every search, university viewed or saved and AI research becomes a private signal (with a 2-week decay). The feed ranks posts by destination, saved universities, field of study, course keywords, freshness and engagement, and explains why each post is there (“Your destination”, “You looked at…”). |
 | **Groups and channels** | Groups where everyone writes (WhatsApp) and channels where only admins post (Telegram); public (listed in *Discover*) or private (8-character invite code). Realtime messages, unread counts, day separators, report/block/delete. |
 | **Student clubs** | *Clubs* tab of each university: ESN sections, associations, sports. Clubs found by AI cite the official page; students can suggest more. Each club has its own chat. |
-| **Erasmus and overseas data** | Catalogue of 10,265 universities in 200 countries (*university-domains* list, MIT licence) with email domains, plus Erasmus codes from the European *Erasmus Without Paper* registry when reachable. Worldwide / Erasmus+ / Overseas filter in *Explore*. |
+| **Europe-first catalogue** | 10,269 universities in 200 countries (*university-domains* list, MIT licence) with their email domains, listed Europe first, then Canada, Australia, other regions and the United States last. 170 curated entries (`scripts/data/universities.curated.json`) cover the major European universities and business schools (CBS, Bocconi, BSE, HEC Paris, ESSEC, ESCP, Sciences Po, Nova SBE, Esade, IE, Mannheim, WHU, Frankfurt School, LMU, TUM, Erasmus/RSM, Tilburg, Amsterdam, Maastricht, LSE, LBS, Warwick, Oxford, Cambridge, UCL, Imperial and more across Spain, Portugal, Italy, the Nordics, Belgium, Switzerland, Austria, Ireland, Poland…) with name, city, country, website, email domains, type (university or business school) and, for some, departments. No record is marked verified yet: pages say the details come from public lists, and no courses, partnerships, rankings or fees are added to the catalogue. Filters: Worldwide / Erasmus+ / Overseas, region, business schools. |
 
 ## Structure
 
@@ -127,7 +127,7 @@ npm run gen:seed              # regenerates supabase/seed.sql
 npx supabase db push --include-seed
 ```
 
-Hand-curated entries live in `scripts/data/universities.curated.json` and take precedence.
+Curated entries live in `scripts/data/universities.curated.json` and take precedence (fields: `id`, `name`, `type`, `city`, `countryCode`, `website`, `emailDomains`, optional `departments` and `verified`). Set `verified: true` only after checking the details on the official website. The Erasmus Without Paper registry was not reachable when the catalogue was last built, so Erasmus codes are empty.
 
 ### Moderation
 

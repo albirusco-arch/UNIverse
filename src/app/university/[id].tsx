@@ -4,6 +4,7 @@ import * as WebBrowser from 'expo-web-browser';
 import {
   ArrowLeftRight,
   Bookmark,
+  Briefcase,
   ChevronRight,
   ExternalLink,
   GraduationCap,
@@ -146,6 +147,7 @@ export default function UniversityScreen() {
             tone={university.erasmus ? 'primary' : 'accent'}
             label={university.erasmus ? t('university.erasmus') : t('university.overseas')}
           />
+          {university.kind === 'business_school' && <Badge tone="accent" icon={Briefcase} label={t('university.businessSchool')} />}
           {university.erasmusCode && <Badge tone="neutral" label={t('university.erasmusCode', { code: university.erasmusCode })} />}
           <TopRatedBadge score={score} />
         </View>
@@ -232,6 +234,11 @@ export default function UniversityScreen() {
                 onPress={() => WebBrowser.openBrowserAsync(university.website)}
               />
             </Card>
+            {!university.verified && (
+              <Text variant="caption" color="textMuted" style={styles.unverified}>
+                {t('university.unverified')}
+              </Text>
+            )}
           </View>
 
           {signedIn && (
@@ -316,6 +323,9 @@ export default function UniversityScreen() {
 }
 
 const styles = StyleSheet.create({
+  unverified: {
+    marginTop: spacing.sm,
+  },
   hero: {
     borderRadius: radius.xl,
     borderWidth: 1,
