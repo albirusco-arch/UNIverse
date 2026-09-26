@@ -50,3 +50,4 @@ supabase/functions/**/deno.lock
 
 # Supabase CLI local state (created by `supabase link`)
 supabase/.temp/
+supabase/.branches/

@@ -69,6 +69,16 @@ Scan the QR code with **Expo Go**. In demo mode, *Try the demo* signs you in as 
 
 ## Connect the backend
 
+**Quick way (one command).** On your computer, in the project folder, after `npm install`:
+
+```bash
+npm run setup:backend
+```
+
+It signs you in to Supabase in the browser (no token to copy), creates the `universe` project in Frankfurt (or reuses it), loads the database, asks for your Claude API key (hidden input), deploys the server functions, writes `.env.local` and checks that everything answers. You only need a free [Supabase](https://supabase.com) account and a key from [console.anthropic.com](https://console.anthropic.com). Running it again is safe. Afterwards, finish step 3 below in the dashboard (the script prints the links).
+
+The same steps by hand:
+
 1. **Create a Supabase project** at [supabase.com](https://supabase.com), in an EU region (GDPR).
 2. **Database**:
    ```bash
@@ -77,7 +87,7 @@ Scan the QR code with **Expo Go**. In demo mode, *Try the demo* signs you in as 
    npx supabase db push --include-seed
    ```
    The migrations create the tables, access rules (RLS), the university-email check, the score and the groups; the seed loads countries and universities.
-3. **Email sign-in**: in *Authentication → Email Templates* add `{{ .Token }}` to the “Magic Link” template (6-digit code) and set the OTP length to 6.
+3. **Email sign-in**: in *Authentication → Email Templates* add `{{ .Token }}` (the 6-digit code) to the “Magic Link” template and to the “Confirm signup” template (new accounts receive that one), and set the email OTP length to 6 (*Authentication → Sign In / Providers → Email*).
 4. **Realtime chat**: already on (the migration adds `group_messages` to the Realtime publication).
 5. **Claude API key** (from [console.anthropic.com](https://console.anthropic.com)):
    ```bash
@@ -96,6 +106,7 @@ Scan the QR code with **Expo Go**. In demo mode, *Try the demo* signs you in as 
    npx supabase functions deploy partner-lists
    npx supabase functions deploy delete-account
    ```
+   Without Docker, add `--use-api` to bundle the functions on Supabase's side.
    A research run takes 1–3 minutes: the Supabase Free plan stops functions after 150 seconds, so production needs the **Pro plan**.
 7. **App**: copy `.env.example` to `.env.local` and fill in the URL and *anon key* (*Settings → API*).
 
@@ -176,4 +187,5 @@ npm run import:universities   # updates the university catalogue
 npm run gen:seed              # regenerates supabase/seed.sql from the catalogue
 npm run import:partnerships   # CSV of official agreements -> SQL
 npm run gen:brand             # icons, splash and logo from assets/brand/logo-original.png
+npm run setup:backend         # creates and connects the Supabase backend (see above)
 ```

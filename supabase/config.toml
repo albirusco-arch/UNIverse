@@ -9,6 +9,10 @@ import_map = "./functions/research/deno.json"
 verify_jwt = true
 import_map = "./functions/university-insights/deno.json"
 
+[functions.partner-lists]
+verify_jwt = true
+import_map = "./functions/partner-lists/deno.json"
+
 [functions.delete-account]
 verify_jwt = true
 import_map = "./functions/delete-account/deno.json"

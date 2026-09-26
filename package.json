@@ -55,7 +55,8 @@
     "gen:seed": "node scripts/generate-seed.mjs",
     "gen:brand": "node scripts/generate-brand-assets.mjs",
     "import:partnerships": "node scripts/import-partnerships.mjs",
-    "import:universities": "node scripts/import-universities.mjs"
+    "import:universities": "node scripts/import-universities.mjs",
+    "setup:backend": "node scripts/setup-backend.mjs"
   },
   "private": true
 }
