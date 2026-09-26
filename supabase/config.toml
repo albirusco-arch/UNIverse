@@ -1,0 +1,10 @@
+# Supabase CLI configuration. Everything not listed here uses the CLI defaults.
+project_id = "universe"
+
+[functions.course-match]
+verify_jwt = true
+import_map = "./functions/course-match/deno.json"
+
+[functions.delete-account]
+verify_jwt = true
+import_map = "./functions/delete-account/deno.json"
