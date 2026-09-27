@@ -2,12 +2,12 @@ import { router } from 'expo-router';
 import {
   ArrowLeftRight,
   ArrowRight,
+  ChevronRight,
   Compass,
   GraduationCap,
   LogIn,
   Plane,
   Settings,
-  ShieldCheck,
   Sparkles,
   UserPlus,
   Users,
@@ -18,26 +18,39 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useRequireAccount } from '@/components/account-gate';
 import { Wordmark } from '@/components/brand';
-import { GradientText } from '@/components/gradient-text';
 import { GroupRow } from '@/components/group-row';
+import { MomentsRail } from '@/components/moments';
+import { OpportunityCard } from '@/components/opportunity-card';
 import { PostCard } from '@/components/post-card';
 import { ScoreRing } from '@/components/score';
-import { Avatar, Button, Card, DemoBadge, IconButton, IconTile, Screen, SectionHeader, Text } from '@/components/ui';
-import { getUniversity, listForYou, listMyGroups, listScores } from '@/data/api';
-import type { ResearchKind, University, UniversityScore } from '@/data/types';
+import { Avatar, Button, Card, DemoBadge, IconButton, Screen, SectionHeader, Text } from '@/components/ui';
+import { getUniversity, listForYou, listMoments, listMyGroups, listOpportunities, listScores } from '@/data/api';
+import type { Opportunity, Profile, ResearchKind, University, UniversityScore } from '@/data/types';
 import { t } from '@/i18n';
 import { flagEmoji } from '@/lib/format';
+import { filterOpportunities, NO_OPPORTUNITY_FILTERS } from '@/lib/opportunities';
 import { isTopRated } from '@/lib/scores';
 import { useSession } from '@/lib/session';
 import { useQuery } from '@/lib/use-query';
-import { colors, gradients, gutter, radius, spacing, type } from '@/theme/tokens';
+import { colors, gutter, radius, spacing } from '@/theme/tokens';
 
-const aiShortcuts: { kind: ResearchKind; icon: LucideIcon; colors: typeof gradients.primary }[] = [
-  { kind: 'exchange', icon: ArrowLeftRight, colors: gradients.primary },
-  { kind: 'admission', icon: GraduationCap, colors: gradients.accent },
-  { kind: 'scholarships', icon: Wallet, colors: gradients.success },
-  { kind: 'visa', icon: Plane, colors: gradients.sky },
+const aiShortcuts: { kind: ResearchKind; icon: LucideIcon }[] = [
+  { kind: 'exchange', icon: ArrowLeftRight },
+  { kind: 'admission', icon: GraduationCap },
+  { kind: 'scholarships', icon: Wallet },
+  { kind: 'visa', icon: Plane },
 ];
+
+/** Open listings, those matching the student's field or universities first. */
+function forProfile(items: Opportunity[], profile: Profile): Opportunity[] {
+  const mine = [profile.homeUniversityId, profile.destinationId];
+  const relevance = (item: Opportunity) =>
+    Number(item.field !== null && item.field === profile.field) + Number(item.universityId !== null && mine.includes(item.universityId));
+  return filterOpportunities(items, NO_OPPORTUNITY_FILTERS)
+    .map((item, index) => ({ item, index, score: relevance(item) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+    .map(({ item }) => item);
+}
 
 function PlanCard() {
   const { profile } = useSession();
@@ -148,6 +161,8 @@ export default function HomeScreen() {
 
   const { data: scores } = useQuery(listScores, []);
   const { data: groups } = useQuery(listMyGroups, []);
+  const { data: opportunities } = useQuery(listOpportunities, []);
+  const { data: moments } = useQuery(() => (signedIn ? listMoments() : Promise.resolve([])), [signedIn]);
   const { data: forYou } = useQuery(
     () => listForYou(profile),
     [profile.destinationId, profile.field, profile.homeUniversity],
@@ -162,6 +177,7 @@ export default function HomeScreen() {
   const activeGroups = (groups ?? []).slice(0, 3);
   const posts = (forYou ?? []).slice(0, 2);
   const firstName = profile.displayName.split(' ')[0];
+  const topOpportunities = forProfile(opportunities ?? [], profile).slice(0, 3);
 
   return (
     <Screen tab>
@@ -193,21 +209,37 @@ export default function HomeScreen() {
       </View>
 
       <View style={styles.hero}>
-        {firstName ? (
-          <Text variant="callout" color="textMuted" style={styles.greeting}>
-            {t('home.greeting', { name: firstName })}
-          </Text>
-        ) : null}
-        <Text variant="display">{t('welcome.title')}</Text>
-        <GradientText text={t('welcome.accent')} style={type.display} />
+        <Text variant="title1">{firstName ? t('home.greeting', { name: firstName }) : t('welcome.title')}</Text>
       </View>
 
-      {signedIn ? <PlanCard /> : <GuestCard />}
+      {signedIn && moments && (
+        <View style={styles.firstSection}>
+          <SectionHeader
+            title={t('home.moments')}
+            action={t('common.seeAll')}
+            onAction={() => router.navigate({ pathname: '/community', params: { section: 'clubs' } })}
+          />
+          <MomentsRail moments={moments.slice(0, 10)} onPost={() => router.push('/moment/new')} />
+        </View>
+      )}
+
+      {topOpportunities.length > 0 && (
+        <View style={signedIn ? styles.section : styles.firstSection}>
+          <SectionHeader title={t('home.opportunities')} action={t('common.seeAll')} onAction={() => router.navigate('/opportunities')} />
+          <View style={styles.list}>
+            {topOpportunities.map((item) => (
+              <OpportunityCard key={item.id} item={item} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View style={styles.section}>{signedIn ? <PlanCard /> : <GuestCard />}</View>
 
       <View style={styles.section}>
         <SectionHeader title={t('home.aiTitle')} />
-        <View style={styles.aiGrid}>
-          {aiShortcuts.map((item) => (
+        <View style={styles.aiList}>
+          {aiShortcuts.map((item, index) => (
             <Pressable
               key={item.kind}
               onPress={() =>
@@ -215,14 +247,17 @@ export default function HomeScreen() {
               }
               accessibilityRole="button"
               accessibilityLabel={t(`research.kinds.${item.kind}`)}
-              style={({ pressed }) => [styles.aiItem, pressed && { opacity: 0.85 }]}>
-              <IconTile icon={item.icon} colors={item.colors} size={36} />
-              <Text variant="bodyStrong" numberOfLines={1}>
-                {t(`research.kinds.${item.kind}`)}
-              </Text>
-              <Text variant="caption" color="textMuted" numberOfLines={2}>
-                {t(`research.kindBodies.${item.kind}`)}
-              </Text>
+              style={({ pressed }) => [styles.aiItem, index > 0 && styles.aiBorder, pressed && { backgroundColor: colors.surfacePressed }]}>
+              <item.icon size={18} color={colors.textSecondary} strokeWidth={1.9} />
+              <View style={styles.flex}>
+                <Text variant="bodyStrong" numberOfLines={1}>
+                  {t(`research.kinds.${item.kind}`)}
+                </Text>
+                <Text variant="caption" color="textMuted" numberOfLines={1}>
+                  {t(`research.kindBodies.${item.kind}`)}
+                </Text>
+              </View>
+              <ChevronRight size={18} color={colors.textMuted} />
             </Pressable>
           ))}
         </View>
@@ -268,17 +303,9 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <Card tone="success" style={[styles.section, styles.trust]}>
-        <View style={styles.trustIcon}>
-          <ShieldCheck size={20} color={colors.successLight} />
-        </View>
-        <View style={styles.flex}>
-          <Text variant="bodyStrong">{t('home.trustTitle')}</Text>
-          <Text variant="callout" color="textSecondary">
-            {t('home.trustBody')}
-          </Text>
-        </View>
-      </Card>
+      <Text variant="caption" color="textMuted" style={styles.section}>
+        {t('home.trustBody')}
+      </Text>
     </Screen>
   );
 }
@@ -299,10 +326,9 @@ const styles = StyleSheet.create({
   },
   hero: {
     marginTop: spacing.xxl,
-    marginBottom: spacing.xl,
   },
-  greeting: {
-    marginBottom: spacing.xs,
+  firstSection: {
+    marginTop: spacing.xl,
   },
   planCard: {
     gap: spacing.sm,
@@ -327,20 +353,22 @@ const styles = StyleSheet.create({
     marginTop: -spacing.xs,
     marginBottom: spacing.md,
   },
-  aiGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  aiItem: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    gap: 6,
-    padding: spacing.md,
+  aiList: {
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  aiItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+  },
+  aiBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
   },
   rail: {
     marginHorizontal: -gutter,
@@ -355,7 +383,7 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     borderRadius: radius.lg,
     borderWidth: 1,
-    borderColor: colors.successBorder,
+    borderColor: colors.border,
     backgroundColor: colors.surface,
   },
   topCardHead: {
@@ -372,18 +400,5 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.md,
-  },
-  trust: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    borderRadius: radius.xl,
-  },
-  trustIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: colors.successSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

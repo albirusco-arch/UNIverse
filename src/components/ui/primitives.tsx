@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import {
@@ -12,7 +11,7 @@ import {
 } from 'react-native';
 
 import { initials } from '@/lib/format';
-import { colors, gradients, radius, spacing } from '@/theme/tokens';
+import { colors, radius, spacing } from '@/theme/tokens';
 
 import { Text } from './text';
 
@@ -179,26 +178,23 @@ export function SectionHeader({
 }
 
 // ---------------------------------------------------------------------------
-// Avatar (initials on brand gradient)
+// Avatar (initials on a flat tile)
 
 export function Avatar({ name, size = 44 }: { name: string; size?: number }) {
   return (
-    <LinearGradient
-      colors={gradients.brand}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: size * 0.38 }}>{initials(name)}</Text>
-    </LinearGradient>
+    <View
+      style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
+      <Text style={{ color: colors.text, fontWeight: '700', fontSize: size * 0.36 }}>{initials(name)}</Text>
+    </View>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Icon tile (Quick access, feature lists)
+// Icon tile (Quick access, feature lists): a flat tile, the icon takes the first tint colour.
 
 export function IconTile({
   icon: Icon,
-  colors: tileColors,
+  colors: tint,
   size = 56,
 }: {
   icon: LucideIcon;
@@ -206,13 +202,9 @@ export function IconTile({
   size?: number;
 }) {
   return (
-    <LinearGradient
-      colors={tileColors}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={{ width: size, height: size, borderRadius: size * 0.3, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon size={size * 0.42} color="#FFFFFF" strokeWidth={1.9} />
-    </LinearGradient>
+    <View style={[styles.tile, { width: size, height: size, borderRadius: size * 0.3 }]}>
+      <Icon size={size * 0.42} color={tint[0]} strokeWidth={1.9} />
+    </View>
   );
 }
 
@@ -380,6 +372,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatar: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceStrong,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  tile: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceStrong,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   chipRow: {
     flexDirection: 'row',

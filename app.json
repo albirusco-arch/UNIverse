@@ -49,6 +49,14 @@
             "NSPrivacyCollectedDataTypePurposes": [
               "NSPrivacyCollectedDataTypePurposeAppFunctionality"
             ]
+          },
+          {
+            "NSPrivacyCollectedDataType": "NSPrivacyCollectedDataTypePhotosorVideos",
+            "NSPrivacyCollectedDataTypeLinked": true,
+            "NSPrivacyCollectedDataTypeTracking": false,
+            "NSPrivacyCollectedDataTypePurposes": [
+              "NSPrivacyCollectedDataTypePurposeAppFunctionality"
+            ]
           }
         ]
       }
@@ -70,6 +78,14 @@
     "plugins": [
       "expo-router",
       "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "UNIverse uses your photos when you choose one to share as a club moment.",
+          "cameraPermission": "UNIverse uses the camera when you take a photo to share as a club moment.",
+          "microphonePermission": false
+        }
+      ],
       [
         "expo-localization",
         {

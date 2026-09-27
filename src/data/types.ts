@@ -111,7 +111,7 @@ export type Equivalence = {
   createdAt: string;
 };
 
-export type ReportTarget = 'post' | 'comment' | 'message' | 'user' | 'group' | 'club';
+export type ReportTarget = 'post' | 'comment' | 'message' | 'user' | 'group' | 'club' | 'moment' | 'opportunity';
 export type ReportReason = 'spam' | 'harassment' | 'misinformation' | 'inappropriate';
 
 // ---------------------------------------------------------------------------
@@ -428,4 +428,56 @@ export type PartnerExtraction = {
   unmatched: string[];
   checkedAt: string | null;
   error: string | null;
+};
+
+// ---------------------------------------------------------------------------
+// Moments: BeReal-style photos from club life, visible for 24 hours
+
+export const MOMENT_REACTIONS = ['🔥', '😂', '😍', '👏', '😮'] as const;
+export type MomentReaction = (typeof MOMENT_REACTIONS)[number];
+
+export type Moment = {
+  id: string;
+  author: Author;
+  clubId: string | null;
+  clubName: string | null;
+  universityId: string | null;
+  /** Signed or local image URL; empty for demo samples, which show the caption on a tinted tile. */
+  imageUrl: string;
+  caption: string;
+  createdAt: string;
+  reactions: Partial<Record<MomentReaction, number>>;
+  myReaction: MomentReaction | null;
+};
+
+// ---------------------------------------------------------------------------
+// Opportunities: internships, jobs and events, each linking to where it is published
+
+export const OPPORTUNITY_KINDS = ['internship', 'graduate', 'part_time', 'event'] as const;
+export type OpportunityKind = (typeof OPPORTUNITY_KINDS)[number];
+
+/** Where a listing is published. External platforms are only linked to, never copied without their link. */
+export const OPPORTUNITY_SOURCES = ['linkedin', 'handshake', 'jobteaser', 'eventbrite', 'university', 'club', 'student'] as const;
+export type OpportunitySource = (typeof OPPORTUNITY_SOURCES)[number];
+
+export type Opportunity = {
+  id: string;
+  kind: OpportunityKind;
+  title: string;
+  organization: string;
+  city: string;
+  countryCode: string;
+  remote: boolean;
+  field: Field | null;
+  /** The original listing: applying or booking always happens there. */
+  url: string;
+  source: OpportunitySource;
+  universityId: string | null;
+  clubId: string | null;
+  deadline: string | null;
+  /** Events only. */
+  startsAt: string | null;
+  createdAt: string;
+  /** Imported by an admin from the platform or checked on the official page; student shares start unverified. */
+  verified: boolean;
 };

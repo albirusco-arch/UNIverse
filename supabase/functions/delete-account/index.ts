@@ -3,6 +3,7 @@
  *
  * Deletes the caller's auth user. Every table references profiles/auth.users with
  * ON DELETE CASCADE, so profile, posts, comments, likes, matches… go with it.
+ * Moment photos live in storage under the user's folder and are removed first.
  * Required by App Store Review Guideline 5.1.1(v) (in-app account deletion).
  */
 import { adminClient, corsHeaders, getCaller, json } from '../_shared/http.ts';
@@ -14,7 +15,18 @@ Deno.serve(async (req) => {
   const user = await getCaller(req);
   if (!user) return json({ error: 'unauthorized' }, 401);
 
-  const { error } = await adminClient().auth.admin.deleteUser(user.id);
+  const admin = adminClient();
+  const bucket = admin.storage.from('moments');
+  const { data: photos } = await bucket.list(user.id, { limit: 1000 });
+  if (photos?.length) {
+    const { error: removeError } = await bucket.remove(photos.map((photo) => `${user.id}/${photo.name}`));
+    if (removeError) {
+      console.error(JSON.stringify({ event: 'delete_moments_failed', user: user.id, error: removeError.message }));
+      return json({ error: 'delete_failed' }, 500);
+    }
+  }
+
+  const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) {
     console.error(JSON.stringify({ event: 'delete_account_failed', user: user.id, error: error.message }));
     return json({ error: 'delete_failed' }, 500);

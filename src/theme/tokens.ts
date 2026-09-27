@@ -43,7 +43,7 @@ export const colors = {
 
   bubbleMine: '#3A4FE0',
   bubbleOther: '#141A2E',
-  tabBar: 'rgba(7,10,19,0.94)',
+  tabBar: '#0C101C',
   overlay: 'rgba(2,4,10,0.75)',
 } as const;
 

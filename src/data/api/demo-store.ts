@@ -8,6 +8,7 @@ import {
   createDemoRatings,
 } from '../demo/social';
 import { catalogueDepartments } from '../catalogue';
+import { createDemoMoments, createDemoOpportunities } from '../demo/opportunities';
 import { createDemoDepartments, createDemoPartnerships } from '../demo/partners';
 import type { Department, PartnerExtraction, Partnership, Post, Research, Signal, UniversityRating } from '../types';
 
@@ -26,6 +27,8 @@ export const demo = {
   insights: createDemoInsights(),
   ratingSummaries: createDemoRatings(),
   myRatings: new Map<string, UniversityRating>(),
+  opportunities: createDemoOpportunities(),
+  moments: createDemoMoments(),
 };
 
 /** Replaces a demo post with an updated copy (memoized components compare by reference). */

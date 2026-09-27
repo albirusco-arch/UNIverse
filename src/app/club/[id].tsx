@@ -4,14 +4,16 @@ import { AtSign, ExternalLink, Flag, Link2, MessageCircle, SearchX } from 'lucid
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { useRequireAccount } from '@/components/account-gate';
+import { SignInCard, useRequireAccount } from '@/components/account-gate';
 import { clubIcons, ClubSourceBadge } from '@/components/club-card';
 import { useFeedback } from '@/components/feedback';
-import { Badge, Button, Card, EmptyState, Header, IconTile, ListRow, Screen, Text } from '@/components/ui';
-import { getClub, getUniversity, openClubGroup, reportContent } from '@/data/api';
+import { MomentsRail } from '@/components/moments';
+import { Badge, Button, Card, EmptyState, Header, IconTile, ListRow, Screen, SectionHeader, Text } from '@/components/ui';
+import { getClub, getUniversity, listMoments, openClubGroup, reportContent } from '@/data/api';
 import type { ReportReason } from '@/data/types';
 import { t } from '@/i18n';
 import { hostname } from '@/lib/format';
+import { useSession } from '@/lib/session';
 import { useQuery } from '@/lib/use-query';
 import { colors, gradients, spacing } from '@/theme/tokens';
 
@@ -28,6 +30,8 @@ export default function ClubScreen() {
   const { showSheet, toast } = useFeedback();
   const [opening, setOpening] = useState(false);
   const requireAccount = useRequireAccount();
+  const { signedIn } = useSession();
+  const { data: moments } = useQuery(() => (signedIn ? listMoments({ clubId: id }) : Promise.resolve([])), [id, signedIn]);
 
   if (!club) {
     return (
@@ -92,6 +96,23 @@ export default function ClubScreen() {
         ) : null}
       </View>
 
+      <View style={styles.moments}>
+        <SectionHeader title={t('moments.title')} />
+        {signedIn ? (
+          <>
+            <Text variant="caption" color="textMuted" style={styles.momentsBody}>
+              {moments?.length === 0 ? t('moments.empty') : t('moments.body')}
+            </Text>
+            <MomentsRail
+              moments={moments ?? []}
+              onPost={() => router.push({ pathname: '/moment/new', params: { clubId: club.id } })}
+            />
+          </>
+        ) : (
+          <SignInCard feature="moments" />
+        )}
+      </View>
+
       <Card style={styles.links}>
         {club.website ? (
           <ListRow
@@ -135,6 +156,13 @@ const styles = StyleSheet.create({
   badges: {
     flexDirection: 'row',
     gap: 6,
+  },
+  moments: {
+    marginTop: spacing.xxl,
+  },
+  momentsBody: {
+    marginTop: -spacing.sm,
+    marginBottom: spacing.md,
   },
   links: {
     padding: 0,

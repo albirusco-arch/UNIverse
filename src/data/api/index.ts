@@ -24,6 +24,8 @@ export {
 export * from './community';
 export * from './feed';
 export * from './groups';
+export * from './moments';
+export * from './opportunities';
 export * from './partners';
 export * from './profile';
 export * from './research';

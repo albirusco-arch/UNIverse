@@ -1,22 +1,22 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Compass, House, MessageCircle, Sparkles, Users, type LucideIcon } from 'lucide-react-native';
+import { Briefcase, Compass, House, MessageCircle, Users, type LucideIcon } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Text } from '@/components/ui';
 import { t } from '@/i18n';
-import { colors, gradients, radius } from '@/theme/tokens';
+import { colors, radius } from '@/theme/tokens';
 
-const tabs: Record<string, { icon: LucideIcon; label: () => string; featured?: boolean }> = {
+// The AI research tab stays a route (opened from Home and university pages) but has no button here.
+const tabs: Record<string, { icon: LucideIcon; label: () => string }> = {
   index: { icon: House, label: () => t('tabs.home') },
   explore: { icon: Compass, label: () => t('tabs.explore') },
-  research: { icon: Sparkles, label: () => t('tabs.research'), featured: true },
+  opportunities: { icon: Briefcase, label: () => t('tabs.opportunities') },
   community: { icon: Users, label: () => t('tabs.community') },
   groups: { icon: MessageCircle, label: () => t('tabs.groups') },
 };
 
-/** Floating glass tab bar with the AI research tab featured in the centre. */
+/** Minimal floating tab bar. */
 export function TabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   return (
@@ -44,22 +44,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityState={{ selected: focused }}
               accessibilityLabel={label}
               style={styles.item}>
-              {config.featured ? (
-                <LinearGradient
-                  colors={gradients.brand}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={[styles.featured, !focused && { opacity: 0.85 }]}>
-                  <Icon size={20} color="#FFFFFF" strokeWidth={2.3} />
-                </LinearGradient>
-              ) : (
-                <View style={[styles.iconWrap, focused && styles.iconWrapActive]}>
-                  <Icon size={20} color={focused ? colors.primaryLight : colors.textMuted} strokeWidth={focused ? 2.5 : 1.9} />
-                </View>
-              )}
+              <View style={styles.iconWrap}>
+                <Icon size={20} color={focused ? colors.text : colors.textMuted} strokeWidth={focused ? 2.4 : 1.8} />
+              </View>
               <Text
                 numberOfLines={1}
-                style={[styles.label, { color: focused ? colors.primaryLight : colors.textMuted }]}>
+                style={[styles.label, { color: focused ? colors.text : colors.textMuted }]}>
                 {label}
               </Text>
             </Pressable>
@@ -87,15 +77,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     backgroundColor: colors.tabBar,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    borderRadius: radius.xl + 4,
-    paddingVertical: 8,
+    borderColor: colors.border,
+    borderRadius: radius.xl,
+    paddingVertical: 6,
     paddingHorizontal: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.4,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 12 },
-    elevation: 16,
   },
   item: {
     flex: 1,
@@ -111,19 +96,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  iconWrapActive: {
-    backgroundColor: colors.primarySoft,
-  },
-  featured: {
-    width: 40,
-    height: 32,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   label: {
     fontSize: 10,
     lineHeight: 12,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

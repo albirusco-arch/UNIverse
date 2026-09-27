@@ -1,6 +1,9 @@
 # UNIverse
 
-Mobile app (iOS and Android) for university students and researchers who study abroad: Erasmus+, overseas exchanges or full degrees. The interface is in English, with Italian as a second language.
+Mobile app (iOS and Android) for university students and researchers: the global connector for university life. Internships, jobs and events from the platforms students already use, their clubs, and useful info for studying abroad (Erasmus+, overseas exchanges or full degrees). The interface is in English, with Italian as a second language.
+
+- **Opportunities**: internships, graduate jobs, part-time work and events in one list with filters, plus the same search opened on LinkedIn, Handshake, JobTeaser and Eventbrite.
+- **Club moments**: BeReal-style photos from club life, visible for 24 hours, with emoji reactions and a “Trending clubs” ranking.
 
 - **Students only**: sign-in with a university email address (over 10,000 universities recognised by their domain).
 - **AI research with sources**: course matching, entry requirements, scholarships and visas; every item cites an official page and anything unconfirmed is flagged.
@@ -18,7 +21,9 @@ Built with Expo (React Native + TypeScript), Supabase (database, sign-in, realti
 
 | Feature | How it works |
 | --- | --- |
-| **Brand** | “U” logo with its orbit (`assets/brand/`), blue → violet palette on a near-black background (`src/theme/tokens.ts`), generated icons and splash. |
+| **Brand** | “U” logo with its orbit (`assets/brand/`), minimal flat design on a near-black background with one blue accent (`src/theme/tokens.ts`), generated icons and splash. |
+| **Opportunities** (*Opportunities* tab) | Internships, graduate jobs, part-time work and events with filters (keywords, city or country, type, remote, source). LinkedIn, Handshake, JobTeaser and Eventbrite offer no public API to read their listings, so UNIverse never copies them: listings in the app come from an admin import of listings we are allowed to republish (verified) or from students sharing the link to the original page (“Shared by a student”, unverified), and one tap opens the same search on each platform (`src/lib/opportunities.ts`). Applying always happens on the original page. Table: `opportunities`. |
+| **Club moments** (*Community → Clubs*, club pages, Home) | Photos from club life that stay visible to students for 24 hours (BeReal / Instagram stories), taken with the camera or picked from the library, tagged with a club. One emoji reaction per student (🔥 😂 😍 👏 😮); “Trending clubs” ranks clubs by live moments and reactions. Photos go to the private `moments` storage bucket (each student writes only in their own folder) and are shown through signed URLs; 10 moments a day per student; reportable like posts. Tables: `moments`, `moment_reactions`. |
 | **Language** | English by default, Italian as a second language (`src/i18n/en.ts`, `it.ts`). The app follows the device language and can be switched in *Settings → Language*. AI research reports are written in the app language. |
 | **Partner-first search** (*Explore → My partners*) | Search starts from the exchange agreements of the student's home university, with the agreement type (Erasmus+, bilateral, other), then narrows by department or subject area (ISCED-F codes, as in Erasmus+ agreements), region and country (Europe first, then Canada, Australia, other regions, the US last), and language of instruction. Each partner shows where it comes from and when the official source was checked, and opens the AI course match for that destination. Agreements are never invented: they come from an admin import of an official list (verified), from Claude reading the home university's official partner list (`partner-lists` function: only partners on a page it actually opened, matched to the catalogue by Erasmus code, official domain or exact name, shown as “to confirm”), or from students with a link to the official page (shown as “suggested by a student”). Tables: `departments`, `partnerships`, `courses` (linked to departments). |
 | **Guests and accounts** | *Explore as guest* opens the catalogue and each university's overview, quality scores and the clubs found on official pages. AI research, posts and comments, equivalences, saving universities, ratings and groups need an account: guests get a friendly log-in / sign-up prompt. The database enforces the same rules (RLS policies for signed-out visitors) and the AI functions answer 401 without a signed-in user. |
@@ -142,7 +147,7 @@ Curated entries live in `scripts/data/universities.curated.json` and take preced
 
 ### Moderation
 
-Posts, comments, messages, groups and clubs can be reported; users can be blocked (required by the App Store). Content reported by 3 people is hidden automatically. Reports must be reviewed within 24 hours:
+Posts, comments, messages, groups, clubs, moments and opportunities can be reported; users can be blocked (required by the App Store). Content reported by 3 people is hidden automatically. Reports must be reviewed within 24 hours:
 
 ```sql
 select * from reports where status = 'open' order by created_at;

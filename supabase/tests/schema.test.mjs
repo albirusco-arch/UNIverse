@@ -412,6 +412,47 @@ assert.deepEqual(importedRows, [
 console.log('✓ admin import SQL runs, confirms agreements and can be re-run');
 
 // ---------------------------------------------------------------------------
+// Opportunities and moments
+
+await db.exec(`insert into public.opportunities (kind, title, organization, url, source, verified)
+  values ('internship', 'Imported internship', 'Acme', 'https://example.org/imported', 'linkedin', true)`);
+const sharedId = (
+  await as(B, `insert into public.opportunities (kind, title, organization, url, created_by) values ('event', 'Career night', 'ESN', 'https://example.org/night', $1) returning id`, [B])
+).rows[0].id;
+await assert.rejects(as(B, `insert into public.opportunities (kind, title, organization, url, created_by, verified) values ('event', 'Fake verified', 'X', 'https://example.org/fake', $1, true)`, [B]));
+await assert.rejects(as(B, `insert into public.opportunities (kind, title, organization, url, created_by, source) values ('event', 'Fake LinkedIn', 'X', 'https://example.org/fake2', $1, 'linkedin')`, [B]));
+await assert.rejects(as(B, `insert into public.opportunities (kind, title, organization, url, created_by) values ('event', 'No https', 'X', 'http://example.org', $1)`, [B]));
+assert.equal(await count(null, 'select count(*)::int as n from public.opportunities'), 1);
+assert.equal(await count(C, 'select count(*)::int as n from public.opportunities'), 2);
+for (const reporter of [A, C, D]) {
+  await as(reporter, `insert into public.reports (reporter_id, target_type, target_id, reason) values ($1, 'opportunity', $2, 'spam')`, [reporter, sharedId]);
+}
+assert.equal(await count(C, 'select count(*)::int as n from public.opportunities'), 1);
+console.log('✓ opportunities: guests see verified listings, students share links (unverified), 3 reports hide one');
+
+const momentId = (
+  await as(B, `insert into public.moments (author_id, club_id, university_id, image_path, caption) values ($1, $2, 'ucl', $3, 'Buddy dinner') returning id, university_id`, [B, clubId, `${B}/1.jpg`])
+).rows[0];
+assert.equal(momentId.university_id, 'heidelberg');
+await assert.rejects(as(B, `insert into public.moments (author_id, image_path) values ($1, $2)`, [B, `${C}/stolen.jpg`]));
+await assert.rejects(as(C, `insert into public.moments (author_id, image_path) values ($1, $2)`, [B, `${B}/2.jpg`]));
+await as(C, `insert into public.moment_reactions (moment_id, user_id, emoji) values ($1, $2, '🔥')`, [momentId.id, C]);
+await as(D, `insert into public.moment_reactions (moment_id, user_id, emoji) values ($1, $2, '🔥')`, [momentId.id, D]);
+await as(D, `insert into public.moment_reactions (moment_id, user_id, emoji) values ($1, $2, '😂') on conflict (moment_id, user_id) do update set emoji = excluded.emoji`, [momentId.id, D]);
+await assert.rejects(as(D, `insert into public.moment_reactions (moment_id, user_id, emoji) values ($1, $2, '🔥')`, [momentId.id, C]));
+await assert.rejects(as(C, `insert into public.moment_reactions (moment_id, user_id, emoji) values ($1, $2, '💩') on conflict (moment_id, user_id) do update set emoji = excluded.emoji`, [momentId.id, C]));
+const momentFeed = (await as(D, 'select club_name, reactions, my_reaction, author_name from public.moment_feed where id = $1', [momentId.id])).rows[0];
+assert.deepEqual(momentFeed, { club_name: 'ESN Heidelberg', reactions: { '🔥': 1, '😂': 1 }, my_reaction: '😂', author_name: 'Lena M.' });
+assert.equal(await count(null, 'select count(*)::int as n from public.moments'), 0);
+await db.exec(`update public.moments set created_at = now() - interval '25 hours' where id = '${momentId.id}'`);
+assert.equal(await count(C, 'select count(*)::int as n from public.moment_feed'), 0);
+for (let i = 0; i < 10; i++) {
+  await as(C, `insert into public.moments (author_id, image_path) values ($1, $2)`, [C, `${C}/${i}.jpg`]);
+}
+await assert.rejects(as(C, `insert into public.moments (author_id, image_path) values ($1, $2)`, [C, `${C}/11.jpg`]), /moment_limit/);
+console.log('✓ moments: own folder only, club university enforced, one reaction each, gone after 24 hours, 10 a day');
+
+// ---------------------------------------------------------------------------
 // Account deletion cascades everything
 
 await db.exec(`delete from auth.users where id = '${A}'`);
@@ -424,6 +465,8 @@ for (const [table, column] of [
   ['user_signals', 'user_id'],
   ['group_members', 'user_id'],
   ['group_messages', 'author_id'],
+  ['moments', 'author_id'],
+  ['moment_reactions', 'user_id'],
 ]) {
   const left = await db.query(`select count(*)::int as n from public.${table} where ${column} = $1`, [A]);
   assert.equal(left.rows[0].n, 0, table);

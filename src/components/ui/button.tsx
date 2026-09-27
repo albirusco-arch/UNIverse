@@ -1,8 +1,7 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import type { LucideIcon } from 'lucide-react-native';
 import { ActivityIndicator, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, gradients, radius } from '@/theme/tokens';
+import { colors, radius } from '@/theme/tokens';
 
 import { Text } from './text';
 
@@ -70,18 +69,13 @@ export function Button({
       accessibilityState={{ disabled: inactive, busy: loading }}
       style={({ pressed }) => [
         styles.base,
+        variant === 'primary' && styles.primary,
         variant === 'secondary' && styles.secondary,
         variant === 'danger' && styles.danger,
         { opacity: disabled ? 0.45 : pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.985 : 1 }] },
         style,
       ]}>
-      {variant === 'primary' ? (
-        <LinearGradient colors={gradients.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.gradient}>
-          {content}
-        </LinearGradient>
-      ) : (
-        content
-      )}
+      {content}
     </Pressable>
   );
 }
@@ -91,8 +85,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     overflow: 'hidden',
   },
-  gradient: {
-    borderRadius: radius.md,
+  primary: {
+    backgroundColor: colors.primary,
   },
   secondary: {
     backgroundColor: colors.surfaceStrong,

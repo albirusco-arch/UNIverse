@@ -2,6 +2,8 @@ import { router } from 'expo-router';
 import {
   ArrowLeftRight,
   Bookmark,
+  Briefcase,
+  Camera,
   Handshake,
   LogIn,
   MessagesSquare,
@@ -31,6 +33,8 @@ export type GatedFeature =
   | 'equivalences'
   | 'rate'
   | 'clubs'
+  | 'opportunities'
+  | 'moments'
   | 'profile';
 
 const icons: Record<GatedFeature, LucideIcon> = {
@@ -42,6 +46,8 @@ const icons: Record<GatedFeature, LucideIcon> = {
   equivalences: ArrowLeftRight,
   rate: Star,
   clubs: Users,
+  opportunities: Briefcase,
+  moments: Camera,
   profile: UserRound,
 };
 

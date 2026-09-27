@@ -55,6 +55,7 @@ type ScreenProps = {
   children: ReactNode;
   /** Tab screens leave room for the floating tab bar. */
   tab?: boolean;
+  /** Soft light blobs behind the content; off by default for the minimal look. */
   glow?: boolean;
   header?: ReactNode;
   contentStyle?: StyleProp<ViewStyle>;
@@ -62,7 +63,7 @@ type ScreenProps = {
   footer?: ReactNode;
 };
 
-export function Screen({ children, tab = false, glow = true, header, contentStyle, scrollProps, footer }: ScreenProps) {
+export function Screen({ children, tab = false, glow = false, header, contentStyle, scrollProps, footer }: ScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <View style={styles.root}>
