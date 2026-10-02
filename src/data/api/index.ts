@@ -21,6 +21,7 @@ export {
   setDemoIdentity,
   subscribe,
 } from './core';
+export * from './buddies';
 export * from './community';
 export * from './feed';
 export * from './groups';

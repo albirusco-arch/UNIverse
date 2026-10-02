@@ -4,6 +4,7 @@ Mobile app (iOS and Android) for university students and researchers: the global
 
 - **Opportunities**: internships, graduate jobs, part-time work and events in one list with filters, plus the same search opened on LinkedIn, Handshake, JobTeaser and Eventbrite.
 - **Club moments**: BeReal-style photos from club life, visible for 24 hours, with emoji reactions and a “Trending clubs” ranking.
+- **Travel buddies**: meet the verified students going to your destination, wave, and chat one to one when you both wave.
 
 - **Students only**: sign-in with a university email address (over 10,000 universities recognised by their domain).
 - **AI research with sources**: course matching, entry requirements, scholarships and visas; every item cites an official page and anything unconfirmed is flagged.
@@ -33,6 +34,7 @@ Built with Expo (React Native + TypeScript), Supabase (database, sign-in, realti
 | **University quality** | *Quality* tab of each university. ESG (environmental, social, governance) and teaching are researched by Claude from sustainability reports, rankings and official surveys: an indicator counts only if its source was actually opened, and without enough evidence the score stays empty. Students rate 4 aspects (teaching, professors, environment, sustainability); only averages are shown. Score = ESG 35% + teaching 25% + students 40%; below 3 ratings it is “provisional”. “Top rated” = score ≥ 75 and not provisional. |
 | **Professors** | To avoid defamation and GDPR risks there are no pages or ratings for individual professors: teaching staff quality is one of the dimensions rated at university level. |
 | **“For you” community** | Every search, university viewed or saved and AI research becomes a private signal (with a 2-week decay). The feed ranks posts by destination, saved universities, field of study, course keywords, freshness and engagement, and explains why each post is there (“Your destination”, “You looked at…”). |
+| **Travel buddies** (*Home*, *Groups*) | Students going to the same destination find each other, sorted by what they share (same semester, field, level). Opt-in and reciprocal: only visible students see the list, and only they can be waved at; before that, students see just how many are going. A card shows the profile fields students already see on posts (name, home university, field, level, semester), never an email, an age, a location or a rating. A wave cannot be taken back (30 a day); when both have waved, a private two-person chat opens (a group of kind `direct`, so it has realtime, unread counts and reports). Blocking hides the student and the chat and stops messages. Semesters saved in English or Italian match (`term_key`). Tables: `waves`, `direct_chats`, `profiles.discoverable`; view `travel_buddies`. |
 | **Groups and channels** | Groups where everyone writes (WhatsApp) and channels where only admins post (Telegram); public (listed in *Discover*) or private (8-character invite code). Realtime messages, unread counts, day separators, report/block/delete. |
 | **Student clubs** | *Clubs* tab of each university: ESN sections, associations, sports. Clubs found by AI cite the official page; students can suggest more. Each club has its own chat. |
 | **Europe-first catalogue** | 10,269 universities in 200 countries (*university-domains* list, MIT licence) with their email domains, listed Europe first, then Canada, Australia, other regions and the United States last. 170 curated entries (`scripts/data/universities.curated.json`) cover the major European universities and business schools (CBS, Bocconi, BSE, HEC Paris, ESSEC, ESCP, Sciences Po, Nova SBE, Esade, IE, Mannheim, WHU, Frankfurt School, LMU, TUM, Erasmus/RSM, Tilburg, Amsterdam, Maastricht, LSE, LBS, Warwick, Oxford, Cambridge, UCL, Imperial and more across Spain, Portugal, Italy, the Nordics, Belgium, Switzerland, Austria, Ireland, Poland…) with name, city, country, website, email domains, type (university or business school) and, for some, departments. No record is marked verified yet: pages say the details come from public lists, and no courses, partnerships, rankings or fees are added to the catalogue. Filters: Worldwide / Erasmus+ / Overseas, region, business schools. |
@@ -48,6 +50,7 @@ src/app/                    Screens (Expo Router)
   research/[id].tsx         AI report with sources and checks
   rate/[id].tsx             University rating
   group/…, club/…           Chat, group info, new group, invite code, clubs
+  buddies.tsx               Travel buddies: students going to your destination
   profile.tsx, settings.tsx, legal/[doc].tsx
 src/components/             Design system (ui/) and components
 src/data/api/               Data access (Supabase or demo), one file per area

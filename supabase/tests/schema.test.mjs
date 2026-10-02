@@ -453,6 +453,102 @@ await assert.rejects(as(C, `insert into public.moments (author_id, image_path) v
 console.log('✓ moments: own folder only, club university enforced, one reaction each, gone after 24 hours, 10 a day');
 
 // ---------------------------------------------------------------------------
+// Travel buddies: visible students going to the same destination wave, then chat
+
+const [F, G, H] = [7, 8, 9].map(uid);
+await signUp(F, 'fede@studenti.unimi.it');
+await signUp(G, 'gio@studbocconi.it');
+await signUp(H, 'hana@stud.uni-heidelberg.de');
+const plan = (user, name, term) =>
+  as(user, `update public.profiles set display_name = $2, destination_id = 'cbs.dk', term = $3 where id = $1`, [user, name, term]);
+const makeVisible = (user) => as(user, 'update public.profiles set discoverable = true where id = $1', [user]);
+const wave = (from, to) => as(from, 'insert into public.waves (from_id, to_id) values ($1, $2)', [from, to]);
+await plan(F, 'Fede', 'Spring 2027');
+await plan(G, 'Gio', 'Primavera 2027'); // the same semester, saved in Italian
+await plan(H, 'Hana', 'Fall 2027');
+
+// Opt-in and reciprocal: hidden students see counts only and cannot wave or be waved at.
+await makeVisible(G);
+await makeVisible(H);
+assert.deepEqual((await as(F, 'select * from public.travel_buddy_count()')).rows[0], { total: 2, same_term: 1 });
+assert.equal(await count(F, 'select count(*)::int as n from public.travel_buddies'), 0);
+await assert.rejects(wave(F, G), /row-level security/);
+await assert.rejects(wave(G, F), /row-level security/);
+await makeVisible(F);
+assert.deepEqual(
+  (await as(F, 'select display_name, term, waved_by_me, waved_me, chat_id from public.travel_buddies order by display_name')).rows,
+  [
+    { display_name: 'Gio', term: 'Primavera 2027', waved_by_me: false, waved_me: false, chat_id: null },
+    { display_name: 'Hana', term: 'Fall 2027', waved_by_me: false, waved_me: false, chat_id: null },
+  ],
+);
+// Students going somewhere else are not listed and cannot wave.
+await makeVisible(B);
+assert.equal(await count(F, 'select count(*)::int as n from public.travel_buddies where id = $1', [B]), 0);
+await assert.rejects(wave(B, F), /row-level security/);
+
+// Waves: one per direction, as yourself, private to the pair, never taken back.
+await wave(F, G);
+await assert.rejects(wave(F, G), /duplicate key/);
+await assert.rejects(as(F, 'insert into public.waves (from_id, to_id) values ($1, $2)', [H, G]), /row-level security/);
+await as(F, 'delete from public.waves');
+assert.equal((await db.query('select count(*)::int as n from public.waves')).rows[0].n, 1);
+assert.deepEqual((await as(G, 'select waved_by_me, waved_me from public.travel_buddies where id = $1', [F])).rows[0], { waved_by_me: false, waved_me: true });
+assert.equal(await count(H, 'select count(*)::int as n from public.waves'), 0);
+
+// A direct chat opens only once both have waved, and stays between the two.
+await assert.rejects(as(F, 'select public.open_direct_chat($1)', [G]), /not_connected/);
+await wave(G, F);
+const dm = (await as(F, 'select public.open_direct_chat($1) as id', [G])).rows[0].id;
+assert.equal((await as(G, 'select public.open_direct_chat($1) as id', [F])).rows[0].id, dm);
+assert.equal((await as(G, 'select chat_id from public.travel_buddies where id = $1', [F])).rows[0].chat_id, dm);
+await as(F, `insert into public.group_messages (group_id, author_id, body) values ($1, $2, 'Ciao! CBS in spring too?')`, [dm, F]);
+assert.deepEqual(
+  (await as(G, 'select name, description, kind, visibility, my_role, invite_code, unread_count, member_count, peer_id from public.group_directory where id = $1', [dm])).rows[0],
+  { name: 'Fede', description: 'University of Milan', kind: 'direct', visibility: 'private', my_role: 'member', invite_code: null, unread_count: 1, member_count: 2, peer_id: F },
+);
+assert.equal(await count(H, 'select count(*)::int as n from public.group_directory where id = $1', [dm]), 0);
+assert.equal(await count(H, 'select count(*)::int as n from public.group_messages where group_id = $1', [dm]), 0);
+const dmCode = (await db.query('select invite_code from public.groups where id = $1', [dm])).rows[0].invite_code;
+await assert.rejects(as(H, 'select public.join_group_with_code($1)', [dmCode]), /Invalid invite code/);
+await assert.rejects(as(H, 'insert into public.group_members (group_id, user_id) values ($1, $2)', [dm, H]));
+await assert.rejects(as(H, `select public.create_group('Fake direct', '', 'direct', 'private', null)`), /groups_direct_check/);
+await assert.rejects(as(H, 'insert into public.direct_chats (group_id, user_low, user_high) values ($1, $2, $3)', [dm, F, H]));
+await as(F, `update public.groups set name = 'Renamed' where id = $1`, [dm]);
+assert.equal((await db.query('select name from public.groups where id = $1', [dm])).rows[0].name, 'Direct chat');
+
+// At most 30 waves a day.
+const fans = Array.from({ length: 30 }, (_, i) => uid(100 + i));
+for (const [i, id] of fans.entries()) await signUp(id, `fan${i}@studenti.unimi.it`);
+await db.query('insert into public.waves (from_id, to_id) select $1, unnest($2::uuid[])', [H, fans]);
+await assert.rejects(wave(H, F), /wave_limit/);
+
+// Guests see nothing.
+assert.equal(await count(null, 'select count(*)::int as n from public.waves'), 0);
+assert.equal(await count(null, 'select count(*)::int as n from public.direct_chats'), 0);
+assert.equal(await count(null, 'select count(*)::int as n from public.travel_buddies'), 0);
+assert.deepEqual((await as(null, 'select * from public.travel_buddy_count()')).rows[0], { total: 0, same_term: 0 });
+
+// Blocking hides the student and the chat, and stops messages.
+await as(G, 'insert into public.blocks (blocker_id, blocked_id) values ($1, $2)', [G, F]);
+assert.equal(await count(F, 'select count(*)::int as n from public.travel_buddies where id = $1', [G]), 0);
+assert.equal(await count(F, 'select count(*)::int as n from public.group_directory where id = $1', [dm]), 0);
+assert.equal(await count(G, 'select count(*)::int as n from public.group_directory where id = $1', [dm]), 0);
+await assert.rejects(as(F, `insert into public.group_messages (group_id, author_id, body) values ($1, $2, 'Still there?')`, [dm, F]));
+await assert.rejects(as(F, 'select public.open_direct_chat($1)', [G]), /not_connected/);
+assert.deepEqual((await as(F, 'select * from public.travel_buddy_count()')).rows[0], { total: 1, same_term: 0 });
+
+// Deleting an account removes its waves and direct chats.
+await db.exec(`delete from auth.users where id = '${F}'`);
+assert.equal((await db.query('select count(*)::int as n from public.groups where id = $1', [dm])).rows[0].n, 0);
+assert.equal((await db.query('select count(*)::int as n from public.waves where from_id = $1 or to_id = $1', [F])).rows[0].n, 0);
+assert.deepEqual(
+  (await db.query(`select public.term_key('Spring 2027') a, public.term_key(' primavera 2027') b, public.term_key('Autunno 2026') c, public.term_key('Fall 2026') d, public.term_key('Winter 2026') e, public.term_key('') f`)).rows[0],
+  { a: '2027-spring', b: '2027-spring', c: '2026-fall', d: '2026-fall', e: 'winter 2026', f: null },
+);
+console.log('✓ travel buddies: opt-in and reciprocal, same destination, waves, direct chats after mutual waves, 30 a day, blocks');
+
+// ---------------------------------------------------------------------------
 // Account deletion cascades everything
 
 await db.exec(`delete from auth.users where id = '${A}'`);

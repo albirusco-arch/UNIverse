@@ -68,6 +68,8 @@ export type Profile = {
   destinationId: string | null;
   term: string | null;
   verified: boolean;
+  /** Listed in Travel buddies for students going to the same destination (opt-in). */
+  discoverable: boolean;
 };
 
 export type Author = Pick<
@@ -312,7 +314,8 @@ export type Club = {
 // ---------------------------------------------------------------------------
 // Groups: WhatsApp-style chats and Telegram-style public groups and channels
 
-export type GroupKind = 'group' | 'channel';
+/** "direct": a two-person chat between travel buddies (see Buddy). */
+export type GroupKind = 'group' | 'channel' | 'direct';
 export type GroupVisibility = 'public' | 'private';
 export type GroupRole = 'owner' | 'admin' | 'member';
 
@@ -331,6 +334,8 @@ export type Group = {
   unreadCount: number;
   /** Only visible to members. */
   inviteCode: string | null;
+  /** The other student of a direct chat. */
+  peerId: string | null;
 };
 
 export type GroupMessage = {
@@ -340,6 +345,20 @@ export type GroupMessage = {
   body: string;
   createdAt: string;
 };
+
+// ---------------------------------------------------------------------------
+// Travel buddies (supabase/migrations/20260928000000_travel_buddies.sql): visible
+// students going to the same destination wave, and chat once both have waved.
+
+export type Buddy = Pick<Profile, 'id' | 'displayName' | 'homeUniversity' | 'homeUniversityId' | 'field' | 'level' | 'destinationId' | 'term' | 'verified'> & {
+  wavedByMe: boolean;
+  wavedMe: boolean;
+  /** Direct chat, once one of the two opened it. */
+  chatId: string | null;
+};
+
+/** Visible students going to the same destination, before the viewer is visible too. */
+export type BuddyCount = { total: number; sameTerm: number };
 
 // ---------------------------------------------------------------------------
 // Personalisation signals (what the student searches, views and researches)

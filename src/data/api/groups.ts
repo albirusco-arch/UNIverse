@@ -34,6 +34,7 @@ type GroupRow = {
   my_role: Group['myRole'];
   invite_code: string | null;
   unread_count: number;
+  peer_id: string | null;
 };
 
 function mapGroup(row: GroupRow): Group {
@@ -51,6 +52,7 @@ function mapGroup(row: GroupRow): Group {
     myRole: row.my_role,
     inviteCode: row.invite_code,
     unreadCount: row.unread_count,
+    peerId: row.peer_id,
   };
 }
 
@@ -74,6 +76,11 @@ function demoView(group: DemoGroup): Group {
   };
 }
 
+/** Direct chats disappear once either student blocked the other (as in group_directory). */
+function visibleDemo(group: DemoGroup): boolean {
+  return !(group.kind === 'direct' && group.peerId && demo.blocked.has(group.peerId));
+}
+
 function findDemoGroup(id: string): DemoGroup {
   const group = demo.groups.find((g) => g.id === id);
   if (!group) throw new Error('Unknown group');
@@ -94,7 +101,7 @@ const byActivity = (a: Group, b: Group) => (b.lastMessageAt ?? '').localeCompare
 
 export async function listMyGroups(): Promise<Group[]> {
   if (isDemoGuest()) return [];
-  if (isDemoMode) return demo.groups.map(demoView).filter((g) => g.myRole !== null).sort(byActivity);
+  if (isDemoMode) return demo.groups.filter(visibleDemo).map(demoView).filter((g) => g.myRole !== null).sort(byActivity);
   const { data, error } = await requireClient()
     .from('group_directory')
     .select('*')
@@ -136,7 +143,7 @@ export async function getGroup(id: string): Promise<Group | null> {
   if (isDemoGuest()) return null;
   if (isDemoMode) {
     const group = demo.groups.find((g) => g.id === id);
-    return group ? demoView(group) : null;
+    return group && visibleDemo(group) ? demoView(group) : null;
   }
   const { data, error } = await requireClient().from('group_directory').select('*').eq('id', id).maybeSingle();
   if (error) throw error;
@@ -199,6 +206,7 @@ export async function createGroup(input: {
       myRole: 'owner',
       unreadCount: 0,
       inviteCode: Math.random().toString(36).slice(2, 10).toUpperCase(),
+      peerId: null,
       memberIds: [demoMe.id],
       ownerId: demoMe.id,
     });
@@ -238,7 +246,7 @@ export async function joinGroupWithCode(code: string): Promise<string> {
   requireDemoStudent();
   const normalized = code.trim().toUpperCase();
   if (isDemoMode) {
-    const group = demo.groups.find((g) => g.inviteCode === normalized);
+    const group = demo.groups.find((g) => g.inviteCode === normalized && g.kind !== 'direct');
     if (!group) throw new InvalidInviteCodeError('invalid code');
     joinDemo(group);
     notifyChange();
@@ -275,6 +283,7 @@ export async function openClubGroup(clubId: string, clubName: string): Promise<s
         myRole: null,
         unreadCount: 0,
         inviteCode: Math.random().toString(36).slice(2, 10).toUpperCase(),
+        peerId: null,
         memberIds: [],
         ownerId: demoMe.id,
       };
@@ -314,7 +323,7 @@ export async function sendMessage(groupId: string, body: string) {
     notifyChange();
     // A friendly (sample) reply so the chat feels alive in demo mode.
     const replier = demo.messages.find((m) => m.groupId === groupId && m.author.id !== demoMe.id)?.author;
-    if (replier && group.kind === 'group') {
+    if (replier && group.kind !== 'channel') {
       setTimeout(() => {
         const text = demoReplies[demo.messages.length % demoReplies.length];
         demo.messages.push({ id: `reply-${Date.now()}`, groupId, author: replier, body: text, createdAt: new Date().toISOString() });

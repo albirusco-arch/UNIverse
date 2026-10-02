@@ -65,6 +65,20 @@ export let demoMe: Author = {
   verified: true,
 };
 
+/** The whole demo profile (travel buddies need the semester, level and visibility). */
+export let demoProfile: Profile = {
+  id: 'me',
+  displayName: 'You',
+  homeUniversity: '',
+  homeUniversityId: null,
+  field: null,
+  level: null,
+  destinationId: null,
+  term: null,
+  verified: true,
+  discoverable: false,
+};
+
 let demoSignedIn = false;
 
 /**
@@ -83,6 +97,7 @@ export function requireDemoStudent() {
 
 export function setDemoIdentity(profile: Profile, signedIn: boolean) {
   demoSignedIn = signedIn;
+  demoProfile = { ...profile, id: 'me' };
   demoMe = {
     id: 'me',
     displayName: profile.displayName || 'You',

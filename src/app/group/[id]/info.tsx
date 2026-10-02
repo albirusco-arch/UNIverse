@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { Flag, GraduationCap, LogOut, SearchX, Share2 } from 'lucide-react-native';
+import { Ban, Flag, GraduationCap, LogOut, SearchX, Share2 } from 'lucide-react-native';
 import { ActivityIndicator, Share, StyleSheet, View } from 'react-native';
 
 import { requireAccount } from '@/components/account-gate';
@@ -16,7 +16,7 @@ function GroupInfoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: group, loading } = useQuery(() => getGroup(id), [id]);
   const { showSheet, toast } = useFeedback();
-  const { report } = useModeration();
+  const { report, block } = useModeration();
 
   if (!group) {
     return (
@@ -26,6 +26,39 @@ function GroupInfoScreen() {
         ) : (
           <EmptyState icon={SearchX} text={t('common.error')} />
         )}
+      </Screen>
+    );
+  }
+
+  if (group.kind === 'direct' && group.peerId) {
+    const peer = {
+      id: group.peerId,
+      displayName: group.name,
+      homeUniversity: group.description,
+      field: null,
+      destinationId: null,
+      verified: true,
+    };
+    return (
+      <Screen header={<Header title={t('groups.direct')} />}>
+        <View style={styles.hero}>
+          <GroupAvatar group={group} size={84} />
+          <Text variant="title2" align="center">
+            {group.name}
+          </Text>
+          {group.description ? (
+            <Text variant="body" color="textSecondary" align="center">
+              {group.description}
+            </Text>
+          ) : null}
+        </View>
+        <Card style={styles.actions}>
+          <ListRow icon={Flag} label={t('groups.reportStudent')} onPress={() => report('user', peer.id)} />
+          <ListRow icon={Ban} label={t('common.block')} destructive onPress={() => block(peer, () => router.dismissTo('/groups'))} />
+        </Card>
+        <Text variant="caption" color="textMuted" style={styles.note}>
+          {t('groups.directNote')}
+        </Text>
       </Screen>
     );
   }
@@ -135,6 +168,9 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     paddingHorizontal: spacing.lg,
     fontVariant: ['tabular-nums'],
+  },
+  note: {
+    marginTop: spacing.lg,
   },
   actions: {
     marginTop: spacing.lg,

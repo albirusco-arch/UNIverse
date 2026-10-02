@@ -1,4 +1,5 @@
 import { t } from '@/i18n';
+import { parseTerm } from '@/lib/buddies';
 
 /** The next four exchange semesters, starting from the one after the current. */
 export function upcomingTerms(now = new Date()): string[] {
@@ -13,4 +14,12 @@ export function upcomingTerms(now = new Date()): string[] {
     spring = !spring;
   }
   return terms;
+}
+
+/** A saved semester in the language of the app ("Primavera 2027" reads "Spring 2027" in English). */
+export function termLabel(term: string): string {
+  const parsed = parseTerm(term);
+  if (!parsed) return term;
+  const key = parsed.season === 'spring' ? 'onboarding.termSpring' : 'onboarding.termFall';
+  return t(key, { year: parsed.year });
 }

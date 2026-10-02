@@ -9,7 +9,7 @@ import { ago, demoAuthors as a } from './community';
 export type DemoGroup = Group & { memberIds: string[]; ownerId: string };
 
 export function createDemoGroups(): DemoGroup[] {
-  const base = { lastMessageAt: null, lastMessagePreview: '', myRole: null, unreadCount: 0, inviteCode: null, clubId: null };
+  const base = { lastMessageAt: null, lastMessagePreview: '', myRole: null, unreadCount: 0, inviteCode: null, clubId: null, peerId: null };
   return [
     {
       ...base,

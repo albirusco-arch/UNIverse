@@ -18,6 +18,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { useRequireAccount } from '@/components/account-gate';
 import { Wordmark } from '@/components/brand';
+import { BuddiesTeaser } from '@/components/buddies';
 import { GroupRow } from '@/components/group-row';
 import { MomentsRail } from '@/components/moments';
 import { OpportunityCard } from '@/components/opportunity-card';
@@ -235,6 +236,11 @@ export default function HomeScreen() {
       )}
 
       <View style={styles.section}>{signedIn ? <PlanCard /> : <GuestCard />}</View>
+      {signedIn && !!profile.destinationId && (
+        <View style={styles.buddies}>
+          <BuddiesTeaser />
+        </View>
+      )}
 
       <View style={styles.section}>
         <SectionHeader title={t('home.aiTitle')} />
@@ -332,6 +338,9 @@ const styles = StyleSheet.create({
   },
   planCard: {
     gap: spacing.sm,
+  },
+  buddies: {
+    marginTop: spacing.md,
   },
   route: {
     flexDirection: 'row',

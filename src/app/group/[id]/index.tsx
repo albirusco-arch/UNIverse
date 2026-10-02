@@ -240,13 +240,15 @@ function GroupChatScreen() {
             <GroupAvatar group={group} size={38} />
             <View style={styles.flex}>
               <View style={styles.inline}>
-                {group.visibility === 'private' && <Lock size={12} color={colors.textMuted} />}
+                {group.visibility === 'private' && group.kind !== 'direct' && <Lock size={12} color={colors.textMuted} />}
                 <Text variant="bodyStrong" numberOfLines={1} style={styles.flexShrink}>
                   {group.name}
                 </Text>
               </View>
               <Text variant="caption" color="textMuted" numberOfLines={1}>
-                {group.kind === 'channel' ? t('groups.channel') : t('groups.group')} · {t('common.members', { n: group.memberCount })}
+                {group.kind === 'direct'
+                  ? group.description || t('groups.direct')
+                  : `${group.kind === 'channel' ? t('groups.channel') : t('groups.group')} · ${t('common.members', { n: group.memberCount })}`}
               </Text>
             </View>
             <Info size={20} color={colors.textMuted} />

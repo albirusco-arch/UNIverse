@@ -3,13 +3,14 @@ import { router } from 'expo-router';
 import { Lock, Megaphone, Users } from 'lucide-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Avatar, Text } from '@/components/ui';
 import type { Group } from '@/data/types';
 import { t } from '@/i18n';
 import { timeAgo } from '@/lib/format';
 import { colors, gradients, radius, spacing } from '@/theme/tokens';
 
 export function GroupAvatar({ group, size = 48 }: { group: Pick<Group, 'kind' | 'name'>; size?: number }) {
+  if (group.kind === 'direct') return <Avatar name={group.name} size={size} />;
   const Icon = group.kind === 'channel' ? Megaphone : Users;
   return (
     <LinearGradient
@@ -36,7 +37,7 @@ export function GroupRow({ group }: { group: Group }) {
       <View style={styles.body}>
         <View style={styles.titleRow}>
           <View style={styles.name}>
-            {group.visibility === 'private' && <Lock size={12} color={colors.textMuted} />}
+            {group.visibility === 'private' && group.kind !== 'direct' && <Lock size={12} color={colors.textMuted} />}
             <Text variant="bodyStrong" numberOfLines={1} style={styles.flexShrink}>
               {group.name}
             </Text>

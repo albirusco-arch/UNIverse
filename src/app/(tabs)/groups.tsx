@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { SignInScreen } from '@/components/account-gate';
+import { BuddiesTeaser } from '@/components/buddies';
 import { GroupRow } from '@/components/group-row';
 import { Segmented } from '@/components/segmented';
 import { Button, Card, Chip, ChipScroller, DemoBadge, EmptyState, IconButton, Input, Screen, Text } from '@/components/ui';
@@ -75,6 +76,12 @@ function GroupsTabContent() {
           ]}
         />
       </View>
+
+      {view === 'mine' && !!profile.destinationId && (
+        <View style={styles.buddies}>
+          <BuddiesTeaser />
+        </View>
+      )}
 
       {view === 'mine' &&
         (mine && mine.length > 0 ? (
@@ -152,6 +159,9 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: spacing.xs,
+  },
+  buddies: {
+    marginBottom: spacing.md,
   },
   discover: {
     gap: spacing.md,

@@ -13,6 +13,7 @@ type ProfileRow = {
   destination_id: string | null;
   term: string | null;
   verified: boolean;
+  discoverable: boolean;
 };
 
 function mapProfile(row: ProfileRow): Profile {
@@ -26,6 +27,7 @@ function mapProfile(row: ProfileRow): Profile {
     destinationId: row.destination_id,
     term: row.term,
     verified: row.verified,
+    discoverable: row.discoverable,
   };
 }
 
@@ -46,6 +48,7 @@ export async function saveProfile(profile: Profile) {
       level: profile.level,
       destination_id: profile.destinationId,
       term: profile.term,
+      discoverable: profile.discoverable,
     })
     .eq('id', profile.id);
   if (error) throw error;

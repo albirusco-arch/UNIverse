@@ -4,6 +4,7 @@ import {
   Bookmark,
   Briefcase,
   Camera,
+  Hand,
   Handshake,
   LogIn,
   MessagesSquare,
@@ -35,6 +36,7 @@ export type GatedFeature =
   | 'clubs'
   | 'opportunities'
   | 'moments'
+  | 'buddies'
   | 'profile';
 
 const icons: Record<GatedFeature, LucideIcon> = {
@@ -48,6 +50,7 @@ const icons: Record<GatedFeature, LucideIcon> = {
   clubs: Users,
   opportunities: Briefcase,
   moments: Camera,
+  buddies: Hand,
   profile: UserRound,
 };
 

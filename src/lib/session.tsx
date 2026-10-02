@@ -25,6 +25,7 @@ const emptyProfile: Profile = {
   destinationId: null,
   term: null,
   verified: false,
+  discoverable: false,
 };
 
 type SessionState = {
