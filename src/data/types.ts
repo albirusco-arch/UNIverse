@@ -113,7 +113,7 @@ export type Equivalence = {
   createdAt: string;
 };
 
-export type ReportTarget = 'post' | 'comment' | 'message' | 'user' | 'group' | 'club' | 'moment' | 'opportunity';
+export type ReportTarget = 'post' | 'comment' | 'message' | 'user' | 'group' | 'club' | 'moment' | 'opportunity' | 'plan';
 export type ReportReason = 'spam' | 'harassment' | 'misinformation' | 'inappropriate';
 
 // ---------------------------------------------------------------------------
@@ -359,6 +359,29 @@ export type Buddy = Pick<Profile, 'id' | 'displayName' | 'homeUniversity' | 'hom
 
 /** Visible students going to the same destination, before the viewer is visible too. */
 export type BuddyCount = { total: number; sameTerm: number };
+
+// ---------------------------------------------------------------------------
+// Launch campuses (supabase/migrations/20260929000000_campus_launch.sql): campus
+// features open one university at a time, CBS first. Campus people are Buddy
+// rows of students who study at the campus or are going there.
+
+/** Visible students of a campus (and how many of them are incoming), before the viewer is visible too. */
+export type CampusCount = { total: number; incoming: number };
+
+/** "Aperitivo at 7pm, who's in?": within the next 24 hours, in a public place. */
+export type Plan = {
+  id: string;
+  universityId: string;
+  title: string;
+  place: string;
+  startsAt: string;
+  createdAt: string;
+  author: Author;
+  memberCount: number;
+  joinedByMe: boolean;
+  /** The plan's chat, once the student joined. */
+  groupId: string | null;
+};
 
 // ---------------------------------------------------------------------------
 // Personalisation signals (what the student searches, views and researches)

@@ -27,10 +27,10 @@ const samples: Sample[] = [
   { id: 'demo-buddy-felix', displayName: 'Felix W.', homeUniversity: 'University of Vienna', homeUniversityId: 'univie', field: 'law', level: 'bachelor', sameTerm: false },
 ];
 
-/** Sample students who already waved at the demo student. */
-export const DEMO_INCOMING_WAVES = ['demo-buddy-marta', 'demo-buddy-matteo'];
+/** Sample students who already waved at the demo student (travel buddies and CBS students, see demo/campus). */
+export const DEMO_INCOMING_WAVES = ['demo-buddy-marta', 'demo-buddy-matteo', 'demo-cbs-mads'];
 /** Sample students who wave back a moment after the demo student waves. */
-export const DEMO_WAVES_BACK = new Set(['demo-buddy-jonas', 'demo-buddy-ana']);
+export const DEMO_WAVES_BACK = new Set(['demo-buddy-jonas', 'demo-buddy-ana', 'demo-cbs-freja', 'demo-cbs-lea']);
 
 /** The semester after `term` ("Spring 2027" → "Fall 2027"). */
 function nextTerm(term: string | null): string | null {

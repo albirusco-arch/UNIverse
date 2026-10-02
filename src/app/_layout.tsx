@@ -49,6 +49,7 @@ function RootNavigator() {
       <Stack.Screen name="group/join" options={modal} />
       <Stack.Screen name="opportunity/new" options={modal} />
       <Stack.Screen name="moment/new" options={modal} />
+      <Stack.Screen name="plan/new" options={modal} />
       <Stack.Screen name="moment/[id]" options={{ animation: 'fade' }} />
     </Stack>
   );

@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { SignInScreen } from '@/components/account-gate';
 import { BuddiesTeaser } from '@/components/buddies';
+import { CampusCard, LaunchInviteCard } from '@/components/campus';
 import { GroupRow } from '@/components/group-row';
 import { Segmented } from '@/components/segmented';
 import { Button, Card, Chip, ChipScroller, DemoBadge, EmptyState, IconButton, Input, Screen, Text } from '@/components/ui';
@@ -77,9 +78,11 @@ function GroupsTabContent() {
         />
       </View>
 
-      {view === 'mine' && !!profile.destinationId && (
-        <View style={styles.buddies}>
-          <BuddiesTeaser />
+      {view === 'mine' && (
+        <View style={styles.social}>
+          <CampusCard />
+          {!!profile.destinationId && <BuddiesTeaser />}
+          <LaunchInviteCard />
         </View>
       )}
 
@@ -160,7 +163,8 @@ const styles = StyleSheet.create({
   list: {
     padding: spacing.xs,
   },
-  buddies: {
+  social: {
+    gap: spacing.md,
     marginBottom: spacing.md,
   },
   discover: {

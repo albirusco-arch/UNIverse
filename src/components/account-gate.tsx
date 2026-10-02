@@ -8,6 +8,7 @@ import {
   Handshake,
   LogIn,
   MessagesSquare,
+  PartyPopper,
   Sparkles,
   Star,
   UserPlus,
@@ -37,6 +38,7 @@ export type GatedFeature =
   | 'opportunities'
   | 'moments'
   | 'buddies'
+  | 'campus'
   | 'profile';
 
 const icons: Record<GatedFeature, LucideIcon> = {
@@ -51,6 +53,7 @@ const icons: Record<GatedFeature, LucideIcon> = {
   opportunities: Briefcase,
   moments: Camera,
   buddies: Hand,
+  campus: PartyPopper,
   profile: UserRound,
 };
 

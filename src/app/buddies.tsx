@@ -1,103 +1,32 @@
 import { router } from 'expo-router';
-import { Eye, EyeOff, Hand, MapPin, ShieldCheck, Users, type LucideIcon } from 'lucide-react-native';
+import { MapPin, Users } from 'lucide-react-native';
 import { useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { requireAccount } from '@/components/account-gate';
-import { BuddyCard } from '@/components/buddies';
-import { useFeedback } from '@/components/feedback';
-import { Button, Card, Chip, ChipScroller, DemoBadge, EmptyState, Header, IconTile, Screen, Text } from '@/components/ui';
+import { BuddyCard, JoinCard, usePersonMenu, useVisibility, VisibleCard } from '@/components/buddies';
+import { Button, Chip, ChipScroller, DemoBadge, EmptyState, Header, Screen, Text } from '@/components/ui';
 import { countTravelBuddies, getUniversity, listTravelBuddies } from '@/data/api';
-import type { Buddy, University } from '@/data/types';
+import type { Buddy } from '@/data/types';
 import { t } from '@/i18n';
 import { connection, filterBuddies, matchReasons, rankBuddies, type BuddyFilter } from '@/lib/buddies';
 import { flagEmoji } from '@/lib/format';
 import { useSession } from '@/lib/session';
-import { useModeration } from '@/lib/use-moderation';
 import { useQuery } from '@/lib/use-query';
-import { colors, gradients, spacing } from '@/theme/tokens';
-
-function Point({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
-  return (
-    <View style={styles.point}>
-      <Icon size={16} color={colors.primaryLight} strokeWidth={2.2} />
-      <Text variant="callout" color="textSecondary" style={styles.flex}>
-        {text}
-      </Text>
-    </View>
-  );
-}
-
-/** Opt-in: students only see the list once they are visible too. */
-function JoinCard({ destination, onJoin, busy }: { destination: University; onJoin: () => void; busy: boolean }) {
-  const { data: count } = useQuery(countTravelBuddies, [destination.id]);
-  const total = count?.total ?? 0;
-  return (
-    <Card tone="primary" style={styles.join}>
-      <IconTile icon={Users} colors={gradients.primary} size={48} />
-      <Text variant="title3" align="center">
-        {total > 0
-          ? t('buddies.joinCount', { n: total, university: destination.name })
-          : t('buddies.joinFirst', { university: destination.name })}
-      </Text>
-      {count && count.sameTerm > 0 ? (
-        <Text variant="callout" color="primaryPale" align="center">
-          {t('buddies.joinSameTerm', { n: count.sameTerm })}
-        </Text>
-      ) : null}
-      <Text variant="callout" color="textSecondary" align="center">
-        {t('buddies.joinBody')}
-      </Text>
-      <View style={styles.points}>
-        <Point icon={ShieldCheck} text={t('buddies.privacyShown')} />
-        <Point icon={EyeOff} text={t('buddies.privacyHidden')} />
-        <Point icon={Hand} text={t('buddies.privacyWaves')} />
-      </View>
-      <Button title={t('buddies.becomeVisible')} icon={Eye} loading={busy} onPress={onJoin} style={styles.joinButton} />
-    </Card>
-  );
-}
+import { spacing } from '@/theme/tokens';
 
 function BuddiesScreen() {
-  const { profile, updateProfile } = useSession();
-  const { showSheet, toast } = useFeedback();
-  const { report, block } = useModeration();
+  const { profile } = useSession();
+  const { visible, saving, show, hide } = useVisibility();
   const [filter, setFilter] = useState<BuddyFilter>('all');
-  const [saving, setSaving] = useState(false);
   const destination = getUniversity(profile.destinationId);
 
+  const { data: count } = useQuery(countTravelBuddies, [profile.destinationId, profile.term]);
   const { data: buddies, refresh } = useQuery(
-    () => (profile.discoverable ? listTravelBuddies() : Promise.resolve([] as Buddy[])),
-    [profile.destinationId, profile.discoverable],
+    () => (visible ? listTravelBuddies() : Promise.resolve([] as Buddy[])),
+    [profile.destinationId, visible],
   );
-
-  const setVisible = async (discoverable: boolean) => {
-    setSaving(true);
-    try {
-      await updateProfile({ discoverable });
-      if (!discoverable) setFilter('all');
-    } catch {
-      toast(t('common.error'));
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const hide = () =>
-    showSheet({
-      title: t('buddies.hideTitle'),
-      message: t('buddies.hideBody'),
-      options: [{ label: t('buddies.hide'), destructive: true, onPress: () => setVisible(false) }],
-    });
-
-  const menu = (buddy: Buddy) =>
-    showSheet({
-      title: buddy.displayName,
-      options: [
-        { label: t('common.report'), onPress: () => report('user', buddy.id) },
-        { label: t('common.block'), destructive: true, onPress: () => block(buddy, refresh) },
-      ],
-    });
+  const menu = usePersonMenu(refresh);
 
   const header = (
     <Header
@@ -119,10 +48,20 @@ function BuddiesScreen() {
     );
   }
 
-  if (!profile.discoverable) {
+  if (!visible) {
+    const total = count?.total ?? 0;
     return (
       <Screen header={header}>
-        <JoinCard destination={destination} onJoin={() => setVisible(true)} busy={saving} />
+        <JoinCard
+          title={
+            total > 0
+              ? t('buddies.joinCount', { n: total, university: destination.name })
+              : t('buddies.joinFirst', { university: destination.name })
+          }
+          subtitle={count && count.sameTerm > 0 ? t('buddies.joinSameTerm', { n: count.sameTerm }) : undefined}
+          onJoin={show}
+          busy={saving}
+        />
       </Screen>
     );
   }
@@ -140,23 +79,7 @@ function BuddiesScreen() {
 
   return (
     <Screen header={header}>
-      <Card style={styles.visible}>
-        <Eye size={18} color={colors.successLight} />
-        <View style={styles.flex}>
-          <Text variant="bodyStrong">{t('buddies.visibleTitle')}</Text>
-          <Text variant="caption" color="textMuted">
-            {t('buddies.visibleBody', { university: destination.name })}
-          </Text>
-        </View>
-        <Switch
-          value
-          disabled={saving}
-          onValueChange={(value) => (value ? undefined : hide())}
-          trackColor={{ true: colors.primary, false: colors.surfaceStrong }}
-          thumbColor="#FFFFFF"
-          accessibilityLabel={t('buddies.visibleTitle')}
-        />
-      </Card>
+      <VisibleCard body={t('buddies.visibleBody', { university: destination.name })} saving={saving} onHide={hide} />
 
       <View style={styles.filters}>
         <ChipScroller>
@@ -189,35 +112,6 @@ function BuddiesScreen() {
 export default requireAccount(BuddiesScreen, 'buddies');
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  join: {
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.xxl,
-    marginTop: spacing.md,
-  },
-  points: {
-    alignSelf: 'stretch',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  point: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-  },
-  joinButton: {
-    alignSelf: 'stretch',
-    marginTop: spacing.sm,
-  },
-  visible: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.md,
-  },
   filters: {
     marginTop: spacing.lg,
     marginBottom: spacing.md,

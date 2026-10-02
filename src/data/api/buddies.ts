@@ -7,11 +7,12 @@ import { termKey } from '@/lib/buddies';
 
 import { getUniversity } from '../catalogue';
 import { createDemoBuddies, DEMO_WAVES_BACK, demoGreeting } from '../demo/buddies';
-import type { Buddy, BuddyCount, Field, Level } from '../types';
+import type { Buddy, BuddyCount } from '../types';
 
 import {
   demoMe,
   demoProfile,
+  mapBuddy,
   isDemoGuest,
   isDemoMode,
   notifyChange,
@@ -19,40 +20,9 @@ import {
   requireClient,
   requireDemoStudent,
   requireUserId,
+  type BuddyRow,
 } from './core';
 import { demo } from './demo-store';
-
-type BuddyRow = {
-  id: string;
-  display_name: string;
-  home_university: string;
-  home_university_id: string | null;
-  field: Field | null;
-  level: Level | null;
-  destination_id: string | null;
-  term: string | null;
-  verified: boolean;
-  waved_by_me: boolean;
-  waved_me: boolean;
-  chat_id: string | null;
-};
-
-function mapBuddy(row: BuddyRow): Buddy {
-  return {
-    id: row.id,
-    displayName: row.display_name,
-    homeUniversity: row.home_university,
-    homeUniversityId: row.home_university_id,
-    field: row.field,
-    level: row.level,
-    destinationId: row.destination_id,
-    term: row.term,
-    verified: row.verified,
-    wavedByMe: row.waved_by_me,
-    wavedMe: row.waved_me,
-    chatId: row.chat_id,
-  };
-}
 
 function demoBuddies(): Buddy[] {
   return createDemoBuddies(demoProfile)

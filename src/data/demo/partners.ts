@@ -25,6 +25,7 @@ type Template = {
 
 const templates: Template[] = [
   { partner: 'heidelberg', type: 'erasmus', department: 'bio', isced: ['051'], languages: ['de', 'en'], level: 'B2', places: 2, source: 'admin' },
+  { partner: 'cbs.dk', type: 'erasmus', department: 'econ', isced: ['041'], languages: ['en'], level: 'B2', places: 3, source: 'admin' },
   { partner: 'uva', type: 'erasmus', department: 'econ', isced: ['041', '0311'], languages: ['en'], level: 'B2', places: 4, source: 'admin' },
   { partner: 'kuleuven', type: 'erasmus', department: null, isced: [], languages: ['en', 'nl'], places: 3, source: 'ai' },
   { partner: 'ucm', type: 'erasmus', department: 'bio', isced: ['05'], languages: ['es'], level: 'B1', places: 3, source: 'admin' },

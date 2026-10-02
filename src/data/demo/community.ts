@@ -14,7 +14,7 @@ export const demoAuthors: Record<string, Author> = {
   marco: { id: 'demo-marco', displayName: 'Marco T.', homeUniversity: 'University of Padua', field: 'engineering', destinationId: 'tum', verified: true },
   ines: { id: 'demo-ines', displayName: 'Inès D.', homeUniversity: 'Sorbonne University', field: 'medicine', destinationId: 'ub', verified: true },
   aiko: { id: 'demo-aiko', displayName: 'Aiko S.', homeUniversity: 'The University of Tokyo', field: 'physics_math', destinationId: 'uva', verified: true },
-  daniel: { id: 'demo-daniel', displayName: 'Daniel K.', homeUniversity: 'University of Toronto', field: 'business', destinationId: 'copenhagen', verified: true },
+  daniel: { id: 'demo-daniel', displayName: 'Daniel K.', homeUniversity: 'University of Toronto', field: 'business', destinationId: 'cbs.dk', verified: true },
 };
 
 const a = demoAuthors;
@@ -99,7 +99,7 @@ export function createDemoPosts(): Post[] {
       id: 'p7',
       author: a.daniel,
       topic: 'question',
-      universityId: 'copenhagen',
+      universityId: 'cbs.dk',
       field: 'business',
       body: 'Is it worth learning some Danish before an exchange in Copenhagen, or did English get you through daily life?',
       createdAt: ago(73),

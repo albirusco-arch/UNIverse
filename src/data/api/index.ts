@@ -22,6 +22,7 @@ export {
   subscribe,
 } from './core';
 export * from './buddies';
+export * from './campus';
 export * from './community';
 export * from './feed';
 export * from './groups';

@@ -29,6 +29,7 @@ export function createDemoMoments(): Moment[] {
     { ...base, id: 'mo-2', author: a.giulia, clubId: 'c-esn-hd', clubName: 'Sample ESN section', universityId: 'heidelberg', caption: 'Example — buddy dinner, 40 countries at one table', createdAt: ago(3), reactions: { '😍': 22, '👏': 8 } },
     { ...base, id: 'mo-3', author: a.giulia, clubId: 'c-esn-hd', clubName: 'Sample ESN section', universityId: 'heidelberg', caption: 'Example — castle tour done ✅', createdAt: ago(6), reactions: { '🔥': 5 } },
     { ...base, id: 'mo-4', author: a.lukas, clubId: 'c-debate-hd', clubName: 'Sample debating society', universityId: 'heidelberg', caption: 'Example — final round tonight, come and watch', createdAt: ago(9), reactions: { '😮': 3, '👏': 4 } },
+    { ...base, id: 'mo-cbs', author: a.daniel, clubId: 'c-intl-cbs', clubName: 'Sample international students club', universityId: 'cbs.dk', caption: 'Example — welcome dinner for the new exchange students 🇩🇰', createdAt: ago(4), reactions: { '😍': 11, '🔥': 6 } },
     { ...base, id: 'mo-5', author: a.sofia, clubId: 'c-esn-unimi', clubName: 'Sample ESN section', universityId: 'unimi', caption: 'Example — aperitivo on the Navigli', createdAt: ago(2), reactions: { '😂': 7, '🔥': 9 } },
   ];
 }

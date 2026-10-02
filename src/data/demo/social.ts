@@ -26,6 +26,19 @@ export function createDemoGroups(): DemoGroup[] {
     },
     {
       ...base,
+      id: 'g-cbs',
+      name: 'CBS Exchange 2027',
+      description: 'Incoming exchange students at Copenhagen Business School: housing, courses and Friday bars.',
+      kind: 'group',
+      visibility: 'public',
+      universityId: 'cbs.dk',
+      memberCount: 96,
+      memberIds: [a.daniel.id],
+      ownerId: a.daniel.id,
+      inviteCode: 'CBS2027X',
+    },
+    {
+      ...base,
       id: 'g-biochem',
       name: 'Biochemistry abroad',
       description: 'Biochem and life-science students comparing courses and learning agreements.',
@@ -71,6 +84,8 @@ export function createDemoMessages(): GroupMessage[] {
     { id: 'm1', groupId: 'g-heidelberg', author: a.giulia, body: 'Welcome everyone! Introduce yourself: where are you coming from?', createdAt: ago(30) },
     { id: 'm2', groupId: 'g-heidelberg', author: a.lukas, body: 'Hi! Local student here, happy to help with housing questions.', createdAt: ago(20) },
     { id: 'm3', groupId: 'g-heidelberg', author: a.giulia, body: 'Tip: the international office runs an orientation week before lectures start.', createdAt: ago(3) },
+    { id: 'm-cbs1', groupId: 'g-cbs', author: a.daniel, body: 'Welcome to CBS! The intro week starts with a city tour, sign up on the international office page.', createdAt: ago(8) },
+    { id: 'm-cbs2', groupId: 'g-cbs', author: a.daniel, body: 'Housing tip: start looking early, rooms in Frederiksberg go fast.', createdAt: ago(4) },
     { id: 'm4', groupId: 'g-biochem', author: a.ines, body: 'Has anyone matched a lab course with fewer credits than at home?', createdAt: ago(6) },
     { id: 'm5', groupId: 'g-biochem', author: a.giulia, body: 'Yes, I combined two smaller modules to reach the same credits.', createdAt: ago(5) },
     { id: 'm6', groupId: 'g-universe', author: a.sofia, body: 'New: AI research now covers entry requirements, scholarships and visas.', createdAt: ago(10) },
@@ -90,6 +105,8 @@ export function createDemoClubs(): Club[] {
     { ...base, id: 'c-esn-hd', universityId: 'heidelberg', name: 'Sample ESN section', category: 'international', description: 'Example: the Erasmus Student Network section organises trips and buddy programmes.', source: 'ai', sourceUrl: 'https://example.org/esn', verified: true },
     { ...base, id: 'c-debate-hd', universityId: 'heidelberg', name: 'Sample debating society', category: 'academic', description: 'Example: weekly debates in English, open to exchange students.', source: 'community', sourceUrl: '', verified: false },
     { ...base, id: 'c-rowing-hd', universityId: 'heidelberg', name: 'Sample rowing club', category: 'sports', description: 'Example: beginner courses every semester.', source: 'ai', sourceUrl: 'https://example.org/sports', verified: true },
+    { ...base, id: 'c-intl-cbs', universityId: 'cbs.dk', name: 'Sample international students club', category: 'international', description: 'Example: buddy programme, welcome dinners and trips for exchange students.', source: 'ai', sourceUrl: 'https://example.org/cbs-international', verified: true },
+    { ...base, id: 'c-finance-cbs', universityId: 'cbs.dk', name: 'Sample finance society', category: 'academic', description: 'Example: company visits and case competitions.', source: 'community', sourceUrl: '', verified: false },
     { ...base, id: 'c-esn-unimi', universityId: 'unimi', name: 'Sample ESN section', category: 'international', description: 'Example: welcome events and city tours for incoming students.', source: 'ai', sourceUrl: 'https://example.org/esn-milan', verified: true },
   ];
 }

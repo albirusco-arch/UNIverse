@@ -549,6 +549,102 @@ assert.deepEqual(
 console.log('✓ travel buddies: opt-in and reciprocal, same destination, waves, direct chats after mutual waves, 30 a day, blocks');
 
 // ---------------------------------------------------------------------------
+// Launch campus (CBS): its students and those going there meet, and make plans
+
+const [K, L] = [10, 11].map(uid);
+await signUp(K, 'kasper@student.cbs.dk');
+await signUp(L, 'liv@student.cbs.dk');
+assert.equal((await db.query('select home_university_id from public.profiles where id = $1', [K])).rows[0].home_university_id, 'cbs.dk');
+assert.deepEqual((await as(null, 'select university_id from public.launch_campuses')).rows, [{ university_id: 'cbs.dk' }]);
+assert.equal((await db.query('select count(*)::int as n from public.universities u join public.launch_campuses c on c.university_id = u.id')).rows[0].n, 1);
+await as(K, `update public.profiles set display_name = 'Kasper', discoverable = true where id = $1`, [K]);
+await as(L, `update public.profiles set display_name = 'Liv' where id = $1`, [L]);
+
+// Locals see the incoming students and the other way round, once visible; others see nothing.
+assert.deepEqual((await as(K, `select * from public.campus_people_count('cbs.dk')`)).rows[0], { total: 2, incoming: 2 });
+assert.deepEqual((await as(L, `select * from public.campus_people_count('cbs.dk')`)).rows[0], { total: 3, incoming: 2 });
+assert.equal(await count(L, 'select count(*)::int as n from public.campus_people'), 0);
+assert.deepEqual(
+  (await as(K, `select display_name, home_university_id, destination_id from public.campus_people where campus_id = 'cbs.dk' order by display_name`)).rows,
+  [
+    { display_name: 'Gio', home_university_id: 'unibocconi.it', destination_id: 'cbs.dk' },
+    { display_name: 'Hana', home_university_id: 'heidelberg', destination_id: 'cbs.dk' },
+  ],
+);
+assert.deepEqual((await as(G, 'select display_name from public.campus_people order by display_name')).rows.map((r) => r.display_name), ['Hana', 'Kasper']);
+assert.equal(await count(C, 'select count(*)::int as n from public.campus_people'), 0);
+assert.deepEqual((await as(C, `select * from public.campus_people_count('cbs.dk')`)).rows[0], { total: 0, incoming: 0 });
+assert.equal(await count(B, `select count(*)::int as n from public.campus_people where campus_id = 'heidelberg'`), 0); // not launched
+
+// Campus students wave and chat across home and destination; outsiders cannot.
+await wave(K, G);
+await wave(G, K);
+assert.ok((await as(K, 'select public.open_direct_chat($1) as id', [G])).rows[0].id);
+await makeVisible(C);
+await assert.rejects(wave(C, K), /row-level security/);
+
+// Plans: campus members only, within the next 24 hours, through create_plan().
+const createPlan = (user, campus, title, startsIn = '2 hours') =>
+  as(user, `select public.create_plan($1, $2, 'Café by Solbjerg Plads', now() + $3::interval) as id`, [campus, title, startsIn]).then((r) => r.rows[0].id);
+const aperitivo = await createPlan(K, 'cbs.dk', 'Aperitivo for exchange students');
+assert.equal(await count(L, 'select count(*)::int as n from public.plan_feed where id = $1', [aperitivo]), 1);
+assert.equal(await count(G, 'select count(*)::int as n from public.plan_feed where id = $1', [aperitivo]), 1);
+assert.equal(await count(C, 'select count(*)::int as n from public.plan_feed'), 0);
+await assert.rejects(createPlan(C, 'cbs.dk', 'Gatecrash'), /not_on_campus/);
+await assert.rejects(createPlan(B, 'heidelberg', 'Not launched yet'), /not_on_campus/);
+await assert.rejects(createPlan(K, 'cbs.dk', 'Next week', '3 days'), /check/);
+await assert.rejects(as(K, `insert into public.plans (university_id, author_id, title, place, starts_at) values ('cbs.dk', $1, 'Direct insert', 'Bar', now())`, [K]));
+await assert.rejects(as(K, `update public.plans set hidden = false, member_count = 99 where id = $1 returning id`, [aperitivo]).then((r) => {
+  if (r.rows.length === 0) throw new Error('no rows');
+}));
+
+// Joining adds you to the plan's chat; leaving takes you out; the author stays.
+const planChat = (await as(L, 'select public.join_plan($1) as id', [aperitivo])).rows[0].id;
+assert.deepEqual(
+  (await as(L, 'select member_count, joined_by_me, group_id, author_name from public.plan_feed where id = $1', [aperitivo])).rows[0],
+  { member_count: 2, joined_by_me: true, group_id: planChat, author_name: 'Kasper' },
+);
+assert.equal((await as(G, 'select group_id from public.plan_feed where id = $1', [aperitivo])).rows[0].group_id, null);
+await as(L, `insert into public.group_messages (group_id, author_id, body) values ($1, $2, 'On my way!')`, [planChat, L]);
+assert.equal(await count(K, 'select count(*)::int as n from public.group_message_feed where group_id = $1', [planChat]), 1);
+await assert.rejects(as(C, 'select public.join_plan($1)', [aperitivo]), /Unknown plan/);
+await as(L, 'select public.leave_plan($1)', [aperitivo]);
+await as(K, 'select public.leave_plan($1)', [aperitivo]);
+assert.deepEqual((await as(L, 'select member_count, joined_by_me from public.plan_feed where id = $1', [aperitivo])).rows[0], { member_count: 1, joined_by_me: false });
+assert.equal((await db.query('select count(*)::int as n from public.group_members where group_id = $1', [planChat])).rows[0].n, 1);
+
+// Three a day; gone 3 hours after the start.
+const lunch = await createPlan(K, 'cbs.dk', 'Lunch at the canteen', '20 hours');
+const study = await createPlan(K, 'cbs.dk', 'Study group', '22 hours');
+await assert.rejects(createPlan(K, 'cbs.dk', 'One too many'), /plan_limit/);
+await db.query(`update public.plans set created_at = now() - interval '5 hours', starts_at = now() - interval '4 hours' where id = $1`, [aperitivo]);
+assert.equal(await count(L, 'select count(*)::int as n from public.plan_feed where id = $1', [aperitivo]), 0);
+await assert.rejects(as(L, 'select public.join_plan($1)', [aperitivo]), /Unknown plan/);
+
+// Blocks hide plans; 3 reports hide one for everyone; deleting a plan deletes its chat.
+await as(H, 'insert into public.blocks (blocker_id, blocked_id) values ($1, $2)', [H, K]);
+assert.equal(await count(H, 'select count(*)::int as n from public.plan_feed where author_id = $1', [K]), 0);
+assert.equal(await count(G, 'select count(*)::int as n from public.plan_feed where author_id = $1', [K]), 2);
+for (const reporter of [G, L, H]) {
+  await as(reporter, `insert into public.reports (reporter_id, target_type, target_id, reason) values ($1, 'plan', $2, 'spam')`, [reporter, lunch]);
+}
+assert.equal(await count(G, 'select count(*)::int as n from public.plan_feed where id = $1', [lunch]), 0);
+const studyChat = (await db.query('select group_id from public.plans where id = $1', [study])).rows[0].group_id;
+await as(G, 'delete from public.plans where id = $1', [study]);
+assert.equal((await db.query('select count(*)::int as n from public.plans where id = $1', [study])).rows[0].n, 1);
+await as(K, 'delete from public.plans where id = $1', [study]);
+assert.equal((await db.query('select count(*)::int as n from public.groups where id = $1', [studyChat])).rows[0].n, 0);
+
+// Guests see nothing; deleting an account removes its plans and their chats.
+for (const relation of ['campus_people', 'plans', 'plan_members', 'plan_feed']) {
+  assert.equal(await count(null, `select count(*)::int as n from public.${relation}`), 0, `guests must not read ${relation}`);
+}
+await db.exec(`delete from auth.users where id = '${K}'`);
+assert.equal((await db.query('select count(*)::int as n from public.plans where author_id = $1', [K])).rows[0].n, 0);
+assert.equal((await db.query('select count(*)::int as n from public.groups where id = $1', [planChat])).rows[0].n, 0);
+console.log('✓ launch campus: CBS students and incoming students meet, plans within 24 hours, 3 a day, chats, blocks, reports');
+
+// ---------------------------------------------------------------------------
 // Account deletion cascades everything
 
 await db.exec(`delete from auth.users where id = '${A}'`);

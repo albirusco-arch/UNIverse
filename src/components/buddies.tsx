@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
-import { BadgeCheck, ChevronRight, Hand, MessageCircle, MoreHorizontal } from 'lucide-react-native';
+import { BadgeCheck, ChevronRight, Eye, EyeOff, Hand, MessageCircle, MoreHorizontal, ShieldCheck, Users, type LucideIcon } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import { useFeedback } from '@/components/feedback';
 import { Avatar, Badge, Button, Card, IconTile, Text } from '@/components/ui';
@@ -12,8 +12,110 @@ import { connection, type MatchReason } from '@/lib/buddies';
 import { flagEmoji } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import { termLabel } from '@/lib/terms';
+import { useModeration } from '@/lib/use-moderation';
 import { useQuery } from '@/lib/use-query';
 import { colors, gradients, spacing } from '@/theme/tokens';
+
+/** One visibility setting for travel buddies and the campus (profiles.discoverable). */
+export function useVisibility() {
+  const { profile, updateProfile } = useSession();
+  const { showSheet, toast } = useFeedback();
+  const [saving, setSaving] = useState(false);
+
+  const setVisible = async (discoverable: boolean) => {
+    setSaving(true);
+    try {
+      await updateProfile({ discoverable });
+    } catch {
+      toast(t('common.error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const hide = () =>
+    showSheet({
+      title: t('buddies.hideTitle'),
+      message: t('buddies.hideBody'),
+      options: [{ label: t('buddies.hide'), destructive: true, onPress: () => setVisible(false) }],
+    });
+
+  return { visible: profile.discoverable, saving, show: () => setVisible(true), hide };
+}
+
+/** Report or block a student from their card. */
+export function usePersonMenu(onBlocked: () => void) {
+  const { showSheet } = useFeedback();
+  const { report, block } = useModeration();
+  return (person: Buddy) =>
+    showSheet({
+      title: person.displayName,
+      options: [
+        { label: t('common.report'), onPress: () => report('user', person.id) },
+        { label: t('common.block'), destructive: true, onPress: () => block(person, onBlocked) },
+      ],
+    });
+}
+
+function Point({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
+  return (
+    <View style={styles.point}>
+      <Icon size={16} color={colors.primaryLight} strokeWidth={2.2} />
+      <Text variant="callout" color="textSecondary" style={styles.flex}>
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+/** Opt-in: students only see each other once they are visible too. */
+export function JoinCard({ title, subtitle, onJoin, busy }: { title: string; subtitle?: string; onJoin: () => void; busy: boolean }) {
+  return (
+    <Card tone="primary" style={styles.join}>
+      <IconTile icon={Users} colors={gradients.primary} size={48} />
+      <Text variant="title3" align="center">
+        {title}
+      </Text>
+      {subtitle ? (
+        <Text variant="callout" color="primaryPale" align="center">
+          {subtitle}
+        </Text>
+      ) : null}
+      <Text variant="callout" color="textSecondary" align="center">
+        {t('buddies.joinBody')}
+      </Text>
+      <View style={styles.points}>
+        <Point icon={ShieldCheck} text={t('buddies.privacyShown')} />
+        <Point icon={EyeOff} text={t('buddies.privacyHidden')} />
+        <Point icon={Hand} text={t('buddies.privacyWaves')} />
+      </View>
+      <Button title={t('buddies.becomeVisible')} icon={Eye} loading={busy} onPress={onJoin} style={styles.joinButton} />
+    </Card>
+  );
+}
+
+/** "You are visible", with the switch to hide again. */
+export function VisibleCard({ body, saving, onHide }: { body: string; saving: boolean; onHide: () => void }) {
+  return (
+    <Card style={styles.visible}>
+      <Eye size={18} color={colors.successLight} />
+      <View style={styles.flex}>
+        <Text variant="bodyStrong">{t('buddies.visibleTitle')}</Text>
+        <Text variant="caption" color="textMuted">
+          {body}
+        </Text>
+      </View>
+      <Switch
+        value
+        disabled={saving}
+        onValueChange={(value) => (value ? undefined : onHide())}
+        trackColor={{ true: colors.primary, false: colors.surfaceStrong }}
+        thumbColor="#FFFFFF"
+        accessibilityLabel={t('buddies.visibleTitle')}
+      />
+    </Card>
+  );
+}
 
 function BuddyAction({ buddy }: { buddy: Buddy }) {
   const { toast } = useFeedback();
@@ -57,8 +159,19 @@ function BuddyAction({ buddy }: { buddy: Buddy }) {
   }
 }
 
-/** A student going to the same destination: who they are, what you share, and the wave → chat button. */
-export function BuddyCard({ buddy, reasons, onMenu }: { buddy: Buddy; reasons: MatchReason[]; onMenu: () => void }) {
+/** A student on your path: who they are, what you share, and the wave → chat button. */
+export function BuddyCard({
+  buddy,
+  reasons,
+  tag,
+  onMenu,
+}: {
+  buddy: Buddy;
+  reasons: MatchReason[];
+  /** Shown first, e.g. "CBS student" or "Exchange · Fall 2026" on the campus. */
+  tag?: string;
+  onMenu: () => void;
+}) {
   const home = getUniversity(buddy.homeUniversityId);
   const details = [
     buddy.field ? t(`fields.${buddy.field}`) : null,
@@ -92,8 +205,9 @@ export function BuddyCard({ buddy, reasons, onMenu }: { buddy: Buddy; reasons: M
           <MoreHorizontal size={20} color={colors.textMuted} />
         </Pressable>
       </View>
-      {(incoming || reasons.length > 0) && (
+      {(incoming || reasons.length > 0 || tag) && (
         <View style={styles.badges}>
+          {tag ? <Badge tone="neutral" label={tag} /> : null}
           {incoming && <Badge tone="amber" icon={Hand} label={t('buddies.wavedAtYou')} />}
           {reasons.map((reason) => (
             <Badge key={reason} tone="primary" label={t(`buddies.reasons.${reason}`)} />
@@ -169,5 +283,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+  },
+  join: {
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.xxl,
+    marginTop: spacing.md,
+  },
+  points: {
+    alignSelf: 'stretch',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  point: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  joinButton: {
+    alignSelf: 'stretch',
+    marginTop: spacing.sm,
+  },
+  visible: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.md,
   },
 });

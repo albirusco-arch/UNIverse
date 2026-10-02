@@ -4,7 +4,7 @@
  */
 import { isDemoMode, supabase } from '@/lib/supabase';
 
-import type { Author, Profile } from '../types';
+import type { Author, Buddy, Field, Level, Profile } from '../types';
 
 export { isDemoMode };
 
@@ -128,6 +128,39 @@ export function mapAuthor(row: AuthorColumns): Author {
     field: row.author_field,
     destinationId: row.author_destination_id,
     verified: row.author_verified,
+  };
+}
+
+/** Rows of travel_buddies and campus_people. */
+export type BuddyRow = {
+  id: string;
+  display_name: string;
+  home_university: string;
+  home_university_id: string | null;
+  field: Field | null;
+  level: Level | null;
+  destination_id: string | null;
+  term: string | null;
+  verified: boolean;
+  waved_by_me: boolean;
+  waved_me: boolean;
+  chat_id: string | null;
+};
+
+export function mapBuddy(row: BuddyRow): Buddy {
+  return {
+    id: row.id,
+    displayName: row.display_name,
+    homeUniversity: row.home_university,
+    homeUniversityId: row.home_university_id,
+    field: row.field,
+    level: row.level,
+    destinationId: row.destination_id,
+    term: row.term,
+    verified: row.verified,
+    wavedByMe: row.waved_by_me,
+    wavedMe: row.waved_me,
+    chatId: row.chat_id,
   };
 }
 

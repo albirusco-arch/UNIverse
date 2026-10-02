@@ -186,9 +186,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     () =>
       signInDemo(DEMO_ACCOUNT_EMAIL, {
         displayName: 'Alex Demo',
-        field: 'biochemistry',
+        field: 'business',
         level: 'bachelor',
-        destinationId: 'heidelberg',
+        // CBS is the first launch campus (campus people and plans).
+        destinationId: 'cbs.dk',
         term: upcomingTerms()[0],
       }),
     [signInDemo],
